@@ -1,54 +1,97 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <!-- App Toolbar -->
+    <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/mainToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-
+        android:background="?attr/colorPrimary"
+        app:titleTextColor="?attr/colorOnPrimary"
+        app:navigationIconTint="?attr/colorOnPrimary"
         android:elevation="4dp">
 
-        <!-- Search Bar -->
-        <EditText
-            android:id="@+id/searchBar"
-            android:layout_width="0dp"
+        <!-- Toolbar Content -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:hint="@string/search_hint"
-            android:importantForAutofill="yes"
-            android:background="@drawable/gradient_border_only"
-            android:padding="8dp"
-            android:drawableStart="@drawable/ic_search"
-            android:drawablePadding="8dp"
-            android:inputType="text" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
 
-        <!-- Account/Profile Button -->
-        <ImageView
-            android:id="@+id/accountButton"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_gravity="end"
-            android:src="@drawable/ic_account"
-            android:contentDescription="@string/account_button"
-            android:padding="8dp" />
+            <!-- App Logo or Text -->
+            <TextView
+                android:id="@+id/appTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MyApp"
+                android:textColor="?attr/colorOnPrimary"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:gravity="center_vertical" />
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <!-- Search Icon -->
+            <ImageView
+                android:id="@+id/searchButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_search"
+                android:contentDescription="Search"
+                android:padding="8dp"
+                app:tint="?attr/colorOnPrimary" />
+
+            <!-- Account Button -->
+            <ImageView
+                android:id="@+id/accountButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_account"
+                android:contentDescription="Account"
+                android:padding="8dp"
+                app:tint="?attr/colorOnPrimary" />
+        </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
+
+    <!-- SearchView -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:queryHint="Search for posts, videos, flashcards..."
+        android:visibility="gone" />
 
     <!-- TabLayout -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
-         />
+        app:tabIndicatorColor="#42A5F5"
+        app:tabIndicatorHeight="2dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+        app:tabIconTint="?attr/colorOnPrimary" />
+
+    <!-- Bottom Divider for TabLayout -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp" />
 
     <!-- ViewPager2 -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize" />
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        android:layout_height="match_parent" />
+</LinearLayout>

@@ -1,14 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme -->
-    <style name="Theme.Droidbox" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary colors -->
+    <!-- Base Day/Night Theme -->
+    <style name="Theme.DROIDBOX" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- App-wide colors -->
         <item name="colorPrimary">@color/toolbarBackground</item>
+        <item name="colorPrimaryVariant">@color/toolbarBackground</item>
         <item name="colorOnPrimary">@color/toolbarIconColor</item>
-
     </style>
 
-    <!-- Additional Theme Variants (Optional) -->
-    <style name="Theme.DROIDBOX" parent="Theme.Droidbox">
-        <!-- Override specific styles here, if needed -->
+    <!-- TabLayout Theme -->
+    <style name="TabLayoutTheme">
+        <item name="tabIndicatorColor">#42A5F5</item> <!-- Bright Blue -->
+        <item name="tabIconTint">?android:textColorPrimary</item> <!-- Adapts to Day/Night -->
+        <item name="tabRippleColor">?android:colorControlHighlight</item>
     </style>
 </resources>

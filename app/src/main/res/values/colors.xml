@@ -1,5 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="toolbarBackground">#6200EE</color> <!-- Purple -->
-    <color name="toolbarIconColor">#FFFFFF</color> <!-- White -->
+    <color name="toolbarBackground">#FFFFFF</color> <!-- White -->
+    <color name="toolbarIconColor">#000000</color> <!-- Black -->
+    <color name="blue_bright">#42A5F5</color> <!-- Bright Blue -->
+    <color name="blue">#42A5F5</color>
+    <color name="selectedTabIconColor">@color/blue_bright</color>
+    <color name="icon_color_default">#000000</color>
+    <color name="tab_divider_color">#DDDDDD</color> <!-- Light gray -->
+    <color name="toolbar_divider_color">#DDDDDD</color> <!-- Light gray -->
 </resources>

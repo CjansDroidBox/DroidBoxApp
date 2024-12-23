@@ -1,6 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="toolbarBackground">#3700B3</color> <!-- Darker Purple -->
-    <color name="toolbarIconColor">#B0B0B0</color> <!-- Light Gray -->
-
+    <color name="toolbarBackground">#000000</color> <!-- Black -->
+    <color name="toolbarIconColor">#FFFFFF</color> <!-- White -->
+    <color name="blue_bright">#42A5F5</color> <!-- Same Bright Blue -->
+    <color name="blue">#42A5F5</color>
+    <color name="selectedTabIconColor">@color/blue_bright</color>
+    <color name="tab_divider_color">#333333</color> <!-- Dark gray -->
+    <color name="toolbar_divider_color">#333333</color> <!-- Dark gray -->
 </resources>
