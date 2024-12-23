@@ -1,0 +1,14 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme -->
+    <style name="Theme.Droidbox" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary colors -->
+        <item name="colorPrimary">@color/toolbarBackground</item>
+        <item name="colorOnPrimary">@color/toolbarIconColor</item>
+
+    </style>
+
+    <!-- Additional Theme Variants (Optional) -->
+    <style name="Theme.DROIDBOX" parent="Theme.Droidbox">
+        <!-- Override specific styles here, if needed -->
+    </style>
+</resources>
