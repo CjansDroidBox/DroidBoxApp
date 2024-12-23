@@ -1,9 +1,9 @@
 package com.example.droidbox
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity() {
         val viewPager: ViewPager2 = findViewById(R.id.viewPager)
         searchView = findViewById(R.id.searchView)
 
-        val iconColorDefault = ContextCompat.getColor(this, R.color.toolbarIconColor) // Default color
-        val iconColorSelected = ContextCompat.getColor(this, R.color.selectedTabIconColor) // Selected tab color
+        val iconColorDefault = ContextCompat.getColor(this, R.color.toolbarIconColor) // Default icon color
+        val iconColorSelected = ContextCompat.getColor(this, R.color.selectedTabIconColor) // Selected icon color
 
         // Setup ViewPager Adapter
         val adapter = ViewPagerAdapter(this)
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             when (position) {
                 0 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_home)
                 1 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_group_chat)
-                2->  tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_leaderboard)
+                2 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_leaderboard)
                 3 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_quiz)
                 4 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_flashcards)
                 5 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_videos)
@@ -47,18 +47,22 @@ class MainActivity : AppCompatActivity() {
             }
         }.attach()
 
-        // Handle Tab Icon Tint for Both Selection and Scroll
-        updateTabIcons(tabLayout, 0, iconColorSelected, iconColorDefault) // Initialize first tab
+        // Initialize Tab Icons with First Tab Selected
+        updateTabIcons(tabLayout, 0, iconColorSelected, iconColorDefault)
+
+        // Handle Tab Icon Tint for Selection and Scroll
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 updateTabIcons(tabLayout, position, iconColorSelected, iconColorDefault)
             }
         })
 
-        // Handle Account Button Click
+        // Handle Account Button Click to open UserProfileActivity
         accountButton.setOnClickListener {
-            Toast.makeText(this, "Open Account Settings", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, ProfileSettings::class.java)
+            startActivity(intent)
         }
+
 
         // Handle Search Icon Click
         searchButton.setOnClickListener {
@@ -80,6 +84,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    // Show or Hide the SearchView
     private fun toggleSearchView() {
         if (searchView.visibility == View.GONE) {
             searchView.visibility = View.VISIBLE
@@ -88,14 +93,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Pass Search Query to HomeFragment
     private fun sendSearchQueryToHomeFragment(query: String) {
-        val currentFragment =
-            supportFragmentManager.findFragmentByTag("f" + findViewById<ViewPager2>(R.id.viewPager).currentItem)
-        if (currentFragment is HomeFragment) {
-            currentFragment.filterContent(query)
-        }
+        val currentFragment = supportFragmentManager.fragments.find {
+            it is HomeFragment
+        } as? HomeFragment
+
+        currentFragment?.filterContent(query)
     }
 
+    // Update Tab Icons Based on Selection
     private fun updateTabIcons(
         tabLayout: TabLayout,
         selectedPosition: Int,

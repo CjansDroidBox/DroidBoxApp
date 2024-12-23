@@ -7,4 +7,25 @@
     <color name="icon_color_default">#000000</color>
     <color name="tab_divider_color">#DDDDDD</color> <!-- Light gray -->
     <color name="toolbar_divider_color">#DDDDDD</color> <!-- Light gray -->
+
+    <!-- Primary Colors -->
+    <color name="colorPrimary">#6200EE</color> <!-- Purple -->
+    <color name="colorPrimaryDark">#3700B3</color> <!-- Darker Purple -->
+    <color name="colorAccent">#03DAC5</color> <!-- Teal -->
+
+    <!-- Custom Colors -->
+    <color name="gold">#FFD700</color> <!-- Gold -->
+    <color name="red">#FF0000</color> <!-- Bright Red -->
+    <color name="green">#4CAF50</color> <!-- Green -->
+    <color name="yellow">#FFEB3B</color> <!-- Yellow -->
+    <color name="gray">#9E9E9E</color> <!-- Gray -->
+    <color name="lightGray">#D3D3D3</color> <!-- Light Gray -->
+    <color name="darkGray">#616161</color> <!-- Dark Gray -->
+    <color name="white">#FFFFFF</color> <!-- White -->
+    <color name="black">#000000</color> <!-- Black -->
+
+    <!-- Background Colors -->
+    <color name="gradientStart">#FF7F50</color> <!-- Coral -->
+    <color name="gradientEnd">#FF4500</color> <!-- Orange Red -->
+
 </resources>

@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
+
 }
 
 android {
@@ -45,5 +47,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("androidx.fragment:fragment-ktx:1.6.1")
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.glide)
+    ksp(libs.compiler)
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+
 }
