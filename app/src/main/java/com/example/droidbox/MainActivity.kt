@@ -17,6 +17,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check login state
+        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
+
+        if (!isLoggedIn) {
+            // User is not logged in, redirect to LoginActivity
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
+            return // Exit onCreate to prevent further execution
+        }
+
+        // Existing MainActivity logic
         setContentView(R.layout.activity_main)
 
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.mainToolbar)
@@ -57,12 +71,11 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Handle Account Button Click to open UserProfileActivity
+        // Handle Account Button Click to open ProfileSettings
         accountButton.setOnClickListener {
             val intent = Intent(this, ProfileSettings::class.java)
             startActivity(intent)
         }
-
 
         // Handle Search Icon Click
         searchButton.setOnClickListener {
@@ -83,6 +96,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
 
     // Show or Hide the SearchView
     private fun toggleSearchView() {
