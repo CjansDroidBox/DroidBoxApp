@@ -3,7 +3,6 @@ package com.example.droidbox
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Patterns
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -105,12 +104,12 @@ class ProfileSettings : AppCompatActivity() {
     }
 
     private fun logout() {
-        sharedPreferences.edit().clear().apply()
-        Toast.makeText(this, "Logged Out", Toast.LENGTH_SHORT).show()
+        val editor = sharedPreferences.edit()
+        editor.putBoolean("isLoggedIn", false) // Clear login state
+        editor.apply()
 
-        // Navigate back to LoginActivity
+        // Redirect to LoginActivity
         val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }

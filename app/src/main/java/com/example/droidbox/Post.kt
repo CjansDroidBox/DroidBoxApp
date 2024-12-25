@@ -3,13 +3,5 @@ package com.example.droidbox
 data class Post(
     val title: String,
     val content: String,
-    val timestamp: String,
-    val type: PostType // This refers to the enum
+    val timestamp: String
 )
-
-enum class PostType {
-    FLASHCARD,
-    QUIZ,
-    VIDEO,
-    DOCUMENT
-}

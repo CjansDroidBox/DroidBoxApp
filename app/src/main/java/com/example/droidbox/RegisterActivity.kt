@@ -3,7 +3,9 @@ package com.example.droidbox
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class RegisterActivity : AppCompatActivity() {
@@ -23,10 +25,6 @@ class RegisterActivity : AppCompatActivity() {
         val passwordInput: EditText = findViewById(R.id.passwordInput)
         val confirmPasswordInput: EditText = findViewById(R.id.confirmPasswordInput)
         val registerButton: Button = findViewById(R.id.registerButton)
-        val navigateToLogin: TextView = findViewById(R.id.navigateToLogin)
-
-        // Google Sign-Up Section
-        val googleSignUpSection: LinearLayout = findViewById(R.id.googleSignUpSection)
 
         // Handle registration
         registerButton.setOnClickListener {
@@ -37,20 +35,15 @@ class RegisterActivity : AppCompatActivity() {
 
             if (validateInputs(username, email, password, confirmPassword)) {
                 saveUser(username, email, password)
+
+                // Set isLoggedIn to true
+                val editor = sharedPreferences.edit()
+                editor.putBoolean("isLoggedIn", true)
+                editor.apply()
+
                 Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
-                navigateToLogin()
+                navigateToMainActivity()
             }
-        }
-
-        // Navigate to Login
-        navigateToLogin.setOnClickListener {
-            navigateToLogin()
-        }
-
-        // Handle Google Sign-Up
-        googleSignUpSection.setOnClickListener {
-            // Simulate Google sign-up
-            simulateGoogleSignUp()
         }
     }
 
@@ -86,25 +79,9 @@ class RegisterActivity : AppCompatActivity() {
         editor.apply()
     }
 
-    private fun navigateToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
+    private fun navigateToMainActivity() {
+        val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
-    }
-
-    private fun simulateGoogleSignUp() {
-        // Simulate Google account details
-        val googleUsername = "GoogleUser"
-        val googleEmail = "googleuser@example.com"
-        val googlePassword = "google123"
-
-        // Save simulated Google account to SharedPreferences
-        saveUser(googleUsername, googleEmail, googlePassword)
-
-        // Notify user of success
-        Toast.makeText(this, "Signed up with Google!", Toast.LENGTH_SHORT).show()
-
-        // Navigate to Login or Main Activity
-        navigateToLogin()
     }
 }

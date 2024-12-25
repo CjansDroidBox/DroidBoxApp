@@ -3,12 +3,6 @@
     <string name="search_hint">Search</string>
     <string name="account_button">Account</string>
 
-        <string-array name="post_types">
-            <item>Flashcard</item>
-            <item>Quiz</item>
-            <item>Video</item>
-            <item>Document</item>
-        </string-array>
 
 </resources>
 

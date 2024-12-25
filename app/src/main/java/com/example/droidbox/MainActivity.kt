@@ -21,6 +21,15 @@ class MainActivity : AppCompatActivity() {
         // Check login state
         val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
         val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
+        val hasAccount = sharedPreferences.contains("username") && sharedPreferences.contains("password")
+
+        if (!hasAccount) {
+            // No account found, redirect to RegisterActivity
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
+            finish()
+            return
+        }
 
         if (!isLoggedIn) {
             // User is not logged in, redirect to LoginActivity
