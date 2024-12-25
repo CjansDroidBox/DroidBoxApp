@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -55,35 +56,41 @@ class HomeFragment : Fragment() {
     }
 
     private fun showAddPostDialog() {
+        // Inflate the dialog layout
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_post, null)
         val postTitleInput = dialogView.findViewById<EditText>(R.id.postTitleInput)
         val postContentInput = dialogView.findViewById<EditText>(R.id.postContentInput)
         val postLinkInput = dialogView.findViewById<EditText>(R.id.postLinkInput)
+        val submitPostButton = dialogView.findViewById<Button>(R.id.submitPostButton)
 
+        // Create an AlertDialog without buttons
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("Create New Post")
             .setView(dialogView)
-            .setPositiveButton("Submit") { _, _ ->
-                val title = postTitleInput.text.toString().trim()
-                val content = postContentInput.text.toString().trim()
-                val link = postLinkInput.text.toString().trim()
-
-                if (title.isNotEmpty() && content.isNotEmpty()) {
-                    val newPost = Post(
-                        title = title,
-                        content = if (link.isNotEmpty()) "$content\n\nLink: $link" else content,
-                        timestamp = getCurrentTime()
-                    )
-                    addNewPost(newPost)
-                } else {
-                    Toast.makeText(requireContext(), "Title and content cannot be empty!", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
             .create()
+
+        // Handle Submit Button Click
+        submitPostButton.setOnClickListener {
+            val title = postTitleInput.text.toString().trim()
+            val content = postContentInput.text.toString().trim()
+            val link = postLinkInput.text.toString().trim()
+
+            if (title.isNotEmpty() && content.isNotEmpty()) {
+                val newPost = Post(
+                    title = title,
+                    content = if (link.isNotEmpty()) "$content\n\nLink: $link" else content,
+                    timestamp = getCurrentTime()
+                )
+                addNewPost(newPost)
+                dialog.dismiss() // Dismiss the dialog after adding the post
+            } else {
+                Toast.makeText(requireContext(), "Title and content cannot be empty!", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         dialog.show()
     }
+
+
 
     private fun getCurrentTime(): String {
         val currentTime = SimpleDateFormat("hh:mm a", Locale.getDefault())
