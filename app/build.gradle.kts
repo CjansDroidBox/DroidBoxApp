@@ -52,5 +52,8 @@ dependencies {
     ksp(libs.compiler)
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
+    implementation(libs.swiperefreshlayout)
+
+
 
 }

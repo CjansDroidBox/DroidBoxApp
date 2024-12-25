@@ -91,6 +91,11 @@ class MainActivity : AppCompatActivity() {
             toggleSearchView()
         }
 
+        // Handle tapping anywhere on the SearchView, including the empty area
+        searchView.setOnClickListener {
+            searchView.isIconified = false // Open the search input field
+        }
+
         // Handle Search Query Submission
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -109,10 +114,12 @@ class MainActivity : AppCompatActivity() {
 
     // Show or Hide the SearchView
     private fun toggleSearchView() {
-        if (searchView.visibility == View.GONE) {
-            searchView.visibility = View.VISIBLE
+        if (searchView.visibility == View.VISIBLE) {
+            searchView.visibility = View.GONE // Hide the search bar
+            searchView.clearFocus() // Remove focus if it was previously active
         } else {
-            searchView.visibility = View.GONE
+            searchView.visibility = View.VISIBLE // Show the search bar
+            searchView.requestFocus() // Automatically focus on the search bar
         }
     }
 

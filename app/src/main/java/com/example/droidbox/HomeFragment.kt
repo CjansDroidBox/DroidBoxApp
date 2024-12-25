@@ -10,10 +10,10 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.text.SimpleDateFormat
-import java.util.*
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 class HomeFragment : Fragment() {
 
@@ -21,6 +21,7 @@ class HomeFragment : Fragment() {
     private lateinit var newPostButton: FloatingActionButton
     private val postsList: MutableList<Post> = mutableListOf() // Holds the list of posts
     private lateinit var postsAdapter: PostsAdapter // Adapter for RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -29,30 +30,30 @@ class HomeFragment : Fragment() {
 
         homeRecyclerView = view.findViewById(R.id.homeRecyclerView)
         newPostButton = view.findViewById(R.id.newPostButton)
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
 
-        // Initialize RecyclerView
+        // Initialize RecyclerView and Adapter
         postsAdapter = PostsAdapter(postsList)
         homeRecyclerView.adapter = postsAdapter
-
-        // Load initial sample data
-        loadSampleData()
+        homeRecyclerView.layoutManager = LinearLayoutManager(context)
 
         // Handle New Post Button Click
         newPostButton.setOnClickListener {
             showAddPostDialog() // Show dialog to create a new post
         }
 
+        swipeRefreshLayout.setOnRefreshListener {
+            refreshPosts() // Refresh the RecyclerView
+        }
+
         return view
     }
 
-    private fun loadSampleData() {
-        // Add sample posts (can be replaced with backend/database logic)
-        val samplePosts = listOf(
-            Post("Sample Title 1", "This is a sample post content", "10:30 AM"),
-            Post("Sample Title 2", "Another sample post content", "11:15 AM")
-        )
-        postsList.addAll(samplePosts)
-        postsAdapter.notifyDataSetChanged() // Notify adapter to refresh the RecyclerView
+    private fun refreshPosts() {
+        // Reset the adapter's data to the full posts list
+        postsAdapter.updateData(postsList)
+        swipeRefreshLayout.isRefreshing = false // Stop the refreshing animation
+        Log.d("HomeFragment", "Posts refreshed: $postsList")
     }
 
     private fun showAddPostDialog() {
@@ -63,9 +64,10 @@ class HomeFragment : Fragment() {
         val postLinkInput = dialogView.findViewById<EditText>(R.id.postLinkInput)
         val submitPostButton = dialogView.findViewById<Button>(R.id.submitPostButton)
 
-        // Create an AlertDialog without buttons
+        // Create the AlertDialog
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
+            .setCancelable(true)
             .create()
 
         // Handle Submit Button Click
@@ -81,27 +83,26 @@ class HomeFragment : Fragment() {
                     timestamp = getCurrentTime()
                 )
                 addNewPost(newPost)
-                dialog.dismiss() // Dismiss the dialog after adding the post
+                dialog.dismiss() // Dismiss the dialog after submitting
             } else {
                 Toast.makeText(requireContext(), "Title and content cannot be empty!", Toast.LENGTH_SHORT).show()
             }
         }
 
+        // Show the dialog
         dialog.show()
     }
 
-
-
-    private fun getCurrentTime(): String {
-        val currentTime = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        return currentTime.format(Date())
+    private fun addNewPost(post: Post) {
+        postsList.add(0, post) // Add the new post to the top of the list
+        postsAdapter.notifyItemInserted(0) // Notify adapter about the new post
+        homeRecyclerView.scrollToPosition(0) // Scroll to the top to display the new post
+        Log.d("HomeFragment", "New Post Added to List: $post")
     }
 
-    private fun addNewPost(post: Post) {
-        postsList.add(0, post)
-        postsAdapter.notifyItemInserted(0)
-        homeRecyclerView.scrollToPosition(0)
-        Log.d("PostsAdapter", "New Post Added: $post")
+    private fun getCurrentTime(): String {
+        // Placeholder for getting the current time
+        return "12:00 PM"
     }
 
     fun filterContent(query: String) {
