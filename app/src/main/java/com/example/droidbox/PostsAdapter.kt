@@ -1,25 +1,38 @@
 package com.example.droidbox
 
+<<<<<<< HEAD
 
+=======
+import android.content.Context
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+<<<<<<< HEAD
 import androidx.recyclerview.widget.DiffUtil
+=======
+import androidx.appcompat.app.AlertDialog
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
 class PostsAdapter(
-    private var posts: List<Post>
+    private var posts: MutableList<Post>,
+    private val onDeletePost: (Post) -> Unit
 ) : RecyclerView.Adapter<PostsAdapter.PostViewHolder>() {
 
     inner class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val postTitle: TextView = view.findViewById(R.id.postTitle)
         val postContent: TextView = view.findViewById(R.id.postContent)
         val postTimestamp: TextView = view.findViewById(R.id.postTimestamp)
+<<<<<<< HEAD
         val postImageView: ImageView = view.findViewById(R.id.postImageView) // Added the ImageView reference
+=======
+        val deleteIcon: ImageView = view.findViewById(R.id.deleteIcon)
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -34,6 +47,7 @@ class PostsAdapter(
         holder.postContent.text = post.content
         holder.postTimestamp.text = post.timestamp
 
+<<<<<<< HEAD
         if (!post.imageUrl.isNullOrEmpty()) {
             holder.postImageView.visibility = View.VISIBLE
             Glide.with(holder.itemView.context)
@@ -45,17 +59,40 @@ class PostsAdapter(
         } else {
             holder.postImageView.visibility = View.GONE
         }
+=======
+        holder.deleteIcon.setOnClickListener {
+            showDeleteConfirmationDialog(holder.itemView.context, post)
+        }
+    }
+
+    private fun showDeleteConfirmationDialog(context: Context, post: Post) {
+        AlertDialog.Builder(context)
+            .setTitle("Delete Post")
+            .setMessage("Are you sure you want to delete this post?")
+            .setPositiveButton("Delete") { _, _ ->
+                onDeletePost(post)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
     }
 
 
     override fun getItemCount(): Int = posts.size
 
     fun updateData(newPosts: List<Post>) {
+<<<<<<< HEAD
         val diffCallback = HomeFragment.PostDiffCallback(posts, newPosts)
         val diffResult = DiffUtil.calculateDiff(diffCallback)
         posts = newPosts
         diffResult.dispatchUpdatesTo(this)
         Log.d("PostsAdapter", "Updating Data: $newPosts")
+=======
+        posts.clear()
+        posts.addAll(newPosts)
+        notifyDataSetChanged()
+        Log.d("PostsAdapter", "Posts updated")
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
     }
 
 }

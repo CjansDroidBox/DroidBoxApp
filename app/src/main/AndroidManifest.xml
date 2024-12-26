@@ -33,6 +33,11 @@
 
         <activity android:name=".RegisterActivity" />
 
+        <activity android:name=".FlashcardViewer" />
+
+        <activity android:name=".FlashcardInput" />
+
+
 
     </application>
 

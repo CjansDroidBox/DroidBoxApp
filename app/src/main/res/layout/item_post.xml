@@ -5,7 +5,22 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+<<<<<<< HEAD
     <!-- Post Title -->
+=======
+    <!-- Delete Icon -->
+    <ImageView
+        android:id="@+id/deleteIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_delete"
+        android:contentDescription="Delete Post"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="4dp" />
+
+    <!-- Title of the Post -->
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
     <TextView
         android:id="@+id/postTitle"
         android:layout_width="match_parent"
@@ -13,6 +28,13 @@
         android:text="Post Title"
         android:textStyle="bold"
         android:textSize="16sp"
+<<<<<<< HEAD
+=======
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/deleteIcon"
+        app:layout_constraintTop_toTopOf="parent"
+        android:paddingEnd="8dp"
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
         android:paddingBottom="4dp" />
 
     <!-- Post Content -->

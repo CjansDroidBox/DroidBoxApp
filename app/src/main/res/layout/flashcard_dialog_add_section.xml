@@ -1,0 +1,22 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/sectionNameInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Section Name"
+        android:inputType="text"
+        android:padding="8dp" />
+
+    <Button
+        android:id="@+id/addSectionButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Section"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

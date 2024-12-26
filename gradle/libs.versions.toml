@@ -14,10 +14,17 @@ constraintlayout = "2.2.0"
 ksp = "2.1.0-1.0.29"
 room = "2.6.1"
 swiperefreshlayout = "1.1.0"
+<<<<<<< HEAD
 jsoup = "1.15.3"
 
 [libraries]
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+=======
+cardview = "1.0.0"
+
+[libraries]
+androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+>>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
 swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
