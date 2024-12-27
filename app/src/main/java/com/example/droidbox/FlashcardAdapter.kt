@@ -1,31 +1,15 @@
-
 package com.example.droidbox
 
-import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import java.util.Locale
 
-class FlashcardAdapter(
-    private val flashcards: List<Flashcard>,
-    context: Context
-) : RecyclerView.Adapter<FlashcardAdapter.FlashcardViewHolder>(), TextToSpeech.OnInitListener {
-
-    private var tts: TextToSpeech = TextToSpeech(context, this) // Use context as a property
-
-    inner class FlashcardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val frontSide: View = itemView.findViewById(R.id.frontSide)
-        val backSide: View = itemView.findViewById(R.id.backSide)
-        val frontDeckTitle: TextView = itemView.findViewById(R.id.frontDeckTitle)
-        val ttsTitleIcon: ImageView = itemView.findViewById(R.id.ttsTitleIcon)
-        val backDeckDescription: TextView = itemView.findViewById(R.id.backDeckDescription)
-        val ttsDescriptionIcon: ImageView = itemView.findViewById(R.id.ttsDescriptionIcon)
-    }
+class FlashcardAdapter(private val flashcards: List<Flashcard>, private val tts: TextToSpeech) : RecyclerView.Adapter<FlashcardAdapter.FlashcardViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FlashcardViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.flashcard_item, parent, false)
@@ -34,43 +18,39 @@ class FlashcardAdapter(
 
     override fun onBindViewHolder(holder: FlashcardViewHolder, position: Int) {
         val flashcard = flashcards[position]
-        holder.frontDeckTitle.text = flashcard.title
-        holder.backDeckDescription.text = flashcard.description
+        holder.frontTextView.text = flashcard.title
+        holder.backTextView.text = flashcard.description
 
-        // Flip logic
-        holder.frontSide.setOnClickListener {
-            holder.frontSide.visibility = View.GONE
-            holder.backSide.visibility = View.VISIBLE
-        }
-        holder.backSide.setOnClickListener {
-            holder.backSide.visibility = View.GONE
-            holder.frontSide.visibility = View.VISIBLE
+        holder.flipButton.setOnClickListener {
+            if (holder.frontSide.visibility == View.VISIBLE) {
+                holder.frontSide.visibility = View.GONE
+                holder.backSide.visibility = View.VISIBLE
+            } else {
+                holder.frontSide.visibility = View.VISIBLE
+                holder.backSide.visibility = View.GONE
+            }
         }
 
-        // Text-to-Speech logic
         holder.ttsTitleIcon.setOnClickListener {
-            speakText(holder.frontDeckTitle.text.toString())
+            tts.speak(flashcard.title, TextToSpeech.QUEUE_FLUSH, null, null)
         }
+
         holder.ttsDescriptionIcon.setOnClickListener {
-            speakText(holder.backDeckDescription.text.toString())
+            tts.speak(flashcard.description, TextToSpeech.QUEUE_FLUSH, null, null)
         }
     }
 
-    override fun getItemCount(): Int = flashcards.size
-
-    private fun speakText(text: String) {
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+    override fun getItemCount(): Int {
+        return flashcards.size
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts.language = Locale.US
-        }
-    }
-
-    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView)
-        tts.shutdown()
+    inner class FlashcardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val frontTextView: TextView = itemView.findViewById(R.id.frontDeckTitle)
+        val backTextView: TextView = itemView.findViewById(R.id.backDeckDescription)
+        val flipButton: Button = itemView.findViewById(R.id.flipButton)
+        val ttsTitleIcon: ImageView = itemView.findViewById(R.id.ttsTitleIcon)
+        val ttsDescriptionIcon: ImageView = itemView.findViewById(R.id.ttsDescriptionIcon)
+        val frontSide: View = itemView.findViewById(R.id.frontSide)
+        val backSide: View = itemView.findViewById(R.id.backSide)
     }
 }
-// END OF UPDATED LOGIC

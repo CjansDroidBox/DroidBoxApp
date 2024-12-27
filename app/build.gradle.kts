@@ -55,7 +55,16 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.swiperefreshlayout)
     implementation (libs.jsoup)
-    implementation (libs.androidx.cardview)
+    implementation(libs.androidx.cardview)
+    implementation (libs.lottie)
+    implementation (libs.recyclerview)
+    implementation (libs.shapeimageview)
+    implementation (libs.viewpager2)
+    implementation(project(":cardstackview"))
+
+
+
+
 
 
 }

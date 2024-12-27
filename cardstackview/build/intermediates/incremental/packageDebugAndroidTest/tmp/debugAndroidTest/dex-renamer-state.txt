@@ -1,0 +1,4 @@
+#Sat Dec 28 00:20:17 PST 2024
+base.0=C\:\\Users\\quant\\AndroidStudioProjects\\DROIDBOX\\cardstackview\\build\\intermediates\\dex\\debugAndroidTest\\mergeDexDebugAndroidTest\\classes.dex
+path.0=classes.dex
+renamed.0=classes.dex
