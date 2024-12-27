@@ -54,13 +54,8 @@ dependencies {
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
     implementation(libs.swiperefreshlayout)
-<<<<<<< HEAD
     implementation (libs.jsoup)
-=======
     implementation (libs.androidx.cardview)
->>>>>>> f2c4932 (Remove DroidBoxApp directory from Git tracking)
-
-
 
 
 }
