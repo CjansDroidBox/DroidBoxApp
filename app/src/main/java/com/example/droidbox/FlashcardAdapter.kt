@@ -1,14 +1,22 @@
+
 package com.example.droidbox
 
+import android.content.Context
+import android.speech.tts.TextToSpeech
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Locale
 
-class FlashcardAdapter(private val flashcards: List<Flashcard>) :
-    RecyclerView.Adapter<FlashcardAdapter.FlashcardViewHolder>() {
+class FlashcardAdapter(
+    private val flashcards: List<Flashcard>,
+    context: Context
+) : RecyclerView.Adapter<FlashcardAdapter.FlashcardViewHolder>(), TextToSpeech.OnInitListener {
+
+    private var tts: TextToSpeech = TextToSpeech(context, this) // Use context as a property
 
     inner class FlashcardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val frontSide: View = itemView.findViewById(R.id.frontSide)
@@ -39,14 +47,30 @@ class FlashcardAdapter(private val flashcards: List<Flashcard>) :
             holder.frontSide.visibility = View.VISIBLE
         }
 
-        // Text-to-Speech (if implemented)
+        // Text-to-Speech logic
         holder.ttsTitleIcon.setOnClickListener {
-            // Implement Text-to-Speech logic for the front title
+            speakText(holder.frontDeckTitle.text.toString())
         }
         holder.ttsDescriptionIcon.setOnClickListener {
-            // Implement Text-to-Speech logic for the back description
+            speakText(holder.backDeckDescription.text.toString())
         }
     }
 
     override fun getItemCount(): Int = flashcards.size
+
+    private fun speakText(text: String) {
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts.language = Locale.US
+        }
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        tts.shutdown()
+    }
 }
+// END OF UPDATED LOGIC

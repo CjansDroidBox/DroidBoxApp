@@ -1,3 +1,4 @@
+
 package com.example.droidbox
 
 import android.content.Intent
@@ -110,32 +111,37 @@ class FlashcardsFragment : Fragment() {
             .show()
     }
 
+    // UPDATED LOGIC: Modified showAddSectionDialog to use the existing addSectionButton
     private fun showAddSectionDialog() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.flashcard_dialog_add_section, null)
         val sectionNameInput = dialogView.findViewById<EditText>(R.id.sectionNameInput)
+        val addSectionButton = dialogView.findViewById<Button>(R.id.addSectionButton)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
-                val sectionName = sectionNameInput.text.toString().trim()
-                if (sectionName.isNotEmpty()) {
-                    if (!sectionData.containsKey(sectionName)) {
-                        sectionData[sectionName] = mutableListOf()
-                        addDynamicSection(sectionName)
-                        historyList.add(FlashcardHistory("Added Section: $sectionName"))
-                        historyAdapter.notifyItemInserted(historyList.size - 1)
-                    } else {
-                        Toast.makeText(requireContext(), "Section already exists!", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(requireContext(), "Section name cannot be empty!", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
             .create()
+
+        addSectionButton.setOnClickListener {
+            val sectionName = sectionNameInput.text.toString().trim()
+            if (sectionName.isNotEmpty()) {
+                if (!sectionData.containsKey(sectionName)) {
+                    sectionData[sectionName] = mutableListOf()
+                    addDynamicSection(sectionName)
+                    historyList.add(FlashcardHistory("Added Section: $sectionName"))
+                    historyAdapter.notifyItemInserted(historyList.size - 1)
+                    dialog.dismiss()
+                } else {
+                    Toast.makeText(requireContext(), "Section already exists!", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Section name cannot be empty!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         dialog.show()
     }
+// END OF UPDATED LOGIC
 
     private fun addDynamicSection(sectionName: String) {
         val sectionView = LayoutInflater.from(requireContext())
@@ -174,3 +180,4 @@ class FlashcardsFragment : Fragment() {
             .show()
     }
 }
+

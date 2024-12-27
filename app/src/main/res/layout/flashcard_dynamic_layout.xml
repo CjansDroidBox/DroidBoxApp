@@ -10,6 +10,7 @@
     <EditText
         android:id="@+id/sectionTitle"
         android:layout_width="match_parent"
+        android:textAlignment="center"
         android:layout_height="wrap_content"
         android:hint="Section Name"
         android:focusable="false"

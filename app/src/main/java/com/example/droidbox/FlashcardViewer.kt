@@ -1,3 +1,4 @@
+
 package com.example.droidbox
 
 import android.os.Bundle
@@ -10,6 +11,7 @@ class FlashcardViewer : AppCompatActivity() {
     private lateinit var viewPager: ViewPager2
     private lateinit var flashcardAdapter: FlashcardAdapter
 
+    // UPDATED LOGIC: Pass context to FlashcardAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.flashcard_viewer)
@@ -25,8 +27,12 @@ class FlashcardViewer : AppCompatActivity() {
             return
         }
 
-        // Set up the adapter
-        flashcardAdapter = FlashcardAdapter(flashcards)
+        // Set up the adapter with context
+        flashcardAdapter = FlashcardAdapter(flashcards, this) // Pass 'this' as context
         viewPager.adapter = flashcardAdapter
     }
+// END OF UPDATED LOGIC
+
 }
+
+
