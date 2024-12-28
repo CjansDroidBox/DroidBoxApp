@@ -106,7 +106,6 @@ class FlashcardsFragment : Fragment() {
                 historyList.add(FlashcardHistory("Deleted Section: $sectionName"))
                 historyAdapter.notifyItemRemoved(which)
             }
-            .setNegativeButton("Cancel", null)
             .create()
             .show()
     }
@@ -175,7 +174,6 @@ class FlashcardsFragment : Fragment() {
                 intent.putExtra("sectionName", selectedSectionName)
                 inputDataLauncher.launch(intent)
             }
-            .setNegativeButton("Cancel", null)
             .create()
             .show()
     }

@@ -1,49 +1,51 @@
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:layout_height="match_parent">
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
         android:layout_width="150dp"
         android:layout_height="200dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="8dp">
+        app:layout_constraintWidth_percent="0.8"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="6dp">
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_gravity="center">
 
-            <!-- Front Side -->
             <LinearLayout
                 android:id="@+id/frontSide"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
+                android:layout_gravity="center"
                 android:gravity="center">
 
                 <TextView
                     android:id="@+id/frontDeckTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Front Title"
-                    android:textSize="18sp"
+                    android:textAlignment="center"
+                    android:text="FRONTVIEW"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <ImageView
-                    android:id="@+id/ttsTitleIcon"
-                    android:layout_marginTop="50dp"
+                    android:id="@+id/ttsFrontIcon"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                    android:layout_marginTop="16dp"
                     android:src="@drawable/ic_tts" />
             </LinearLayout>
 
-            <!-- Back Side -->
             <LinearLayout
                 android:id="@+id/backSide"
                 android:layout_width="match_parent"
@@ -54,29 +56,20 @@
 
                 <TextView
                     android:id="@+id/backDeckDescription"
-                    android:layout_gravity="center"
+                    android:textAlignment="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Back Description"
-                    android:textSize="14sp"
-                    android:textStyle="italic" />
+                    android:text="BACKVIEW"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <ImageView
-                    android:id="@+id/ttsDescriptionIcon"
-                    android:layout_marginTop="50dp"
+                    android:id="@+id/ttsBackIcon"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                    android:layout_marginTop="16dp"
                     android:src="@drawable/ic_tts" />
             </LinearLayout>
         </FrameLayout>
     </androidx.cardview.widget.CardView>
-
-    <!-- Flip Button -->
-    <Button
-        android:id="@+id/flipButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:text="Flip Card" />
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
