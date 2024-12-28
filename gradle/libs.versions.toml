@@ -1,5 +1,7 @@
 [versions]
 agp = "8.7.3"
+firebaseAuth = "23.1.0"
+firebaseDatabase = "21.0.0"
 fragmentKtx = "1.8.5"
 glide = "4.16.0"
 kotlin = "2.1.0"
@@ -12,6 +14,7 @@ material = "1.12.0"
 activity = "1.9.3"
 constraintlayout = "2.2.0"
 ksp = "2.1.0-1.0.29"
+playServicesAuth = "21.3.0"
 room = "2.6.1"
 swiperefreshlayout = "1.1.0"
 jsoup = "1.15.3"
@@ -20,12 +23,17 @@ lottie = "3.7.0"
 recyclerview = "1.3.2"
 shapeimageview = "0.9.3"
 viewpager2 = "1.1.0"
+firebase-bom = "33.7.0"
+firebase-analytics = "22.1.2"
 
 
 
 [libraries]
-
-
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+google-firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebase-analytics" }
+google-firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
+google-firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 shapeimageview = { group = "com.github.siyamed", name = "android-shape-imageview", version.ref = "shapeimageview" }
 viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }

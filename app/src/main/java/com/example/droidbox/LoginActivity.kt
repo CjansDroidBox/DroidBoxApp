@@ -1,24 +1,24 @@
+// Refactored LoginActivity.kt with Firebase Authentication integration
 package com.example.droidbox
 
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        // Initialize SharedPreferences
-        sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        firebaseAuth = FirebaseAuth.getInstance()
 
         // Bind views
         val usernameInput: EditText = findViewById(R.id.usernameInput)
@@ -27,46 +27,34 @@ class LoginActivity : AppCompatActivity() {
         val googleSignInSection: LinearLayout = findViewById(R.id.googleSignInSection)
 
         googleSignInSection.setOnClickListener {
-            // Simulate Google Sign-In
+            // Simulate Google Sign-In (Placeholder for real Google Sign-In logic)
             Toast.makeText(this, "Google Sign-In Clicked!", Toast.LENGTH_SHORT).show()
         }
 
         // Handle Login Button Click
         loginButton.setOnClickListener {
-            val username = usernameInput.text.toString().trim()
+            val email = usernameInput.text.toString().trim()
             val password = passwordInput.text.toString().trim()
 
-            if (username.isEmpty() || password.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
             } else {
-                login(username, password)
+                loginWithFirebase(email, password)
             }
         }
     }
 
-    private fun login(username: String, password: String) {
-        // Fetch saved credentials
-        val savedUsername = sharedPreferences.getString("username", null)
-        val savedPassword = sharedPreferences.getString("password", null)
-
-        if (savedUsername != null && savedPassword != null) {
-            if (username == savedUsername && password == savedPassword) {
-                // Update login state
-                val editor = sharedPreferences.edit()
-                editor.putBoolean("isLoggedIn", true)
-                editor.apply()
-
-                Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-
-                // Navigate to ProfileSettings
-                val intent = Intent(this, ProfileSettings::class.java)
-                startActivity(intent)
-                finish()
-            } else {
-                Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
+    private fun loginWithFirebase(email: String, password: String) {
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                }
             }
-        } else {
-            Toast.makeText(this, "No account found. Please register first.", Toast.LENGTH_SHORT).show()
-        }
     }
 }

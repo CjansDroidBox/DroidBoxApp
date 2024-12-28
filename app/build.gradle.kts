@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     id ("kotlin-parcelize")
+    id("com.google.gms.google-services")
 
 }
 
@@ -61,10 +62,12 @@ dependencies {
     implementation (libs.shapeimageview)
     implementation (libs.viewpager2)
     implementation(project(":cardstackview"))
-
-
-
-
-
+    implementation(libs.google.firebase.auth)
+    implementation(libs.google.firebase.database)
+    implementation (libs.google.firebase.analytics)
+    implementation(platform(libs.firebase.bom))
+    implementation (libs.play.services.auth)
 
 }
+
+apply(plugin = "com.google.gms.google-services")

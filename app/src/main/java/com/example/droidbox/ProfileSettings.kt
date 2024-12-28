@@ -1,127 +1,125 @@
+// Refactored ProfileSettings.kt with Firebase integration
 package com.example.droidbox
 
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 
 class ProfileSettings : AppCompatActivity() {
 
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.profile_settings)
 
-        // Initialize SharedPreferences
-        sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+        firebaseAuth = FirebaseAuth.getInstance()
+        val currentUser = firebaseAuth.currentUser
 
         // Bind views
         val username: TextView = findViewById(R.id.username)
         val accountType: TextView = findViewById(R.id.accountType)
         val editProfileButton: Button = findViewById(R.id.editProfileButton)
         val upgradeAccountButton: Button = findViewById(R.id.upgradeAccountButton)
+        val deleteButton: Button = findViewById(R.id.deleteButton)
         val logoutButton: Button = findViewById(R.id.logoutButton)
 
-        // Load default or saved user data
-        val defaultUser = User("DefaultUser", "Free Account")
-        val currentUser = getCurrentUser() ?: defaultUser
+        if (currentUser == null) {
+            Toast.makeText(this, "No user logged in.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
-        username.text = currentUser.username
-        accountType.text = currentUser.accountType
+        // Fetch user data from Firebase Realtime Database
+        val userId = currentUser.uid
+        val userRef = FirebaseDatabase.getInstance().getReference("Users").child(userId)
 
-        // Handle button clicks
-        editProfileButton.setOnClickListener { showEditProfileDialog() }
-        upgradeAccountButton.setOnClickListener { upgradeAccount() }
-        logoutButton.setOnClickListener { logout() }
+        userRef.get().addOnSuccessListener { snapshot ->
+            val userData = snapshot.value as? Map<*, *>
+            username.text = userData?.get("username")?.toString() ?: "Unknown User"
+            accountType.text = userData?.get("accountType")?.toString() ?: "Limited"
+        }.addOnFailureListener {
+            Toast.makeText(this, "Failed to fetch user data.", Toast.LENGTH_SHORT).show()
+        }
 
-        val registerButton: Button = findViewById(R.id.registerButton)
-        registerButton.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
+        // Edit Profile Button
+        editProfileButton.setOnClickListener { showEditProfileDialog(userRef) }
+
+        // Upgrade Account Button
+        upgradeAccountButton.setOnClickListener {
+            userRef.child("accountType").setValue("Premium").addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Account upgraded to Premium!", Toast.LENGTH_SHORT).show()
+                    accountType.text = "Premium"
+                } else {
+                    Toast.makeText(this, "Failed to upgrade account: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Delete Account Button
+        deleteButton.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Delete Account")
+                .setMessage("Are you sure you want to delete your account? This action cannot be undone.")
+                .setPositiveButton("Delete") { _, _ ->
+                    currentUser.delete().addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            userRef.removeValue()
+                            Toast.makeText(this, "Account deleted successfully.", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(this, RegisterActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            Toast.makeText(this, "Failed to delete account: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .create()
+                .show()
+        }
+
+        // Logout Button
+        logoutButton.setOnClickListener {
+            firebaseAuth.signOut()
+            val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
-        }
-
-
-    }
-
-    private fun getCurrentUser(): User? {
-        val username = sharedPreferences.getString("username", null)
-        val accountType = sharedPreferences.getString("accountType", null)
-
-        return if (username != null && accountType != null) {
-            User(username, accountType)
-        } else null
-    }
-
-    private fun saveUser(user: User) {
-        sharedPreferences.edit().apply {
-            putString("username", user.username)
-            putString("accountType", user.accountType)
-            apply()
+            finish()
         }
     }
 
-    private fun showEditProfileDialog() {
+    private fun showEditProfileDialog(userRef: DatabaseReference) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_edit_profile, null)
         val usernameInput = dialogView.findViewById<TextView>(R.id.usernameInput)
-
-        val currentUser = getCurrentUser()
-        usernameInput.text = currentUser?.username
 
         AlertDialog.Builder(this)
             .setTitle("Edit Profile")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
                 val updatedUsername = usernameInput.text.toString().trim()
-
-                if (validateUsername(updatedUsername)) {
-                    val updatedUser = currentUser?.copy(username = updatedUsername)
-                    if (updatedUser != null) {
-                        saveUser(updatedUser)
-                        Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show()
-                        recreate()
+                if (updatedUsername.isNotEmpty()) {
+                    userRef.child("username").setValue(updatedUsername).addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show()
+                            recreate() // Refresh the activity to show updates
+                        } else {
+                            Toast.makeText(this, "Failed to update profile: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 } else {
-                    Toast.makeText(this, "Invalid username. Must be 3-15 characters with no special symbols.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Username cannot be empty.", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)
             .create()
             .show()
     }
-
-    private fun upgradeAccount() {
-        val updatedUser = getCurrentUser()?.copy(accountType = "Premium Account")
-        if (updatedUser != null) {
-            saveUser(updatedUser)
-            Toast.makeText(this, "Account upgraded to Premium!", Toast.LENGTH_SHORT).show()
-            recreate()
-        }
-    }
-
-    private fun logout() {
-        val editor = sharedPreferences.edit()
-        editor.putBoolean("isLoggedIn", false) // Clear login state
-        editor.apply()
-
-        // Redirect to LoginActivity
-        val intent = Intent(this, LoginActivity::class.java)
-        startActivity(intent)
-        finish()
-    }
-
-
-    private fun validateUsername(username: String): Boolean {
-        val regex = "^[a-zA-Z0-9]{3,15}$".toRegex()
-        return username.matches(regex)
-    }
 }
-
-data class User(
-    val username: String,
-    val accountType: String
-)

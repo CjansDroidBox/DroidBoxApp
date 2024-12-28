@@ -10,36 +10,29 @@ import androidx.core.content.ContextCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var searchView: SearchView
+    private lateinit var firebaseAuth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check login state
-        val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
-        val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
-        val hasAccount = sharedPreferences.contains("username") && sharedPreferences.contains("password")
+        firebaseAuth = FirebaseAuth.getInstance()
 
-        if (!hasAccount) {
-            // No account found, redirect to RegisterActivity
+        // Check user authentication state
+        val currentUser = firebaseAuth.currentUser
+        if (currentUser == null) {
+            // Redirect to RegisterActivity if no user is logged in
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
             finish()
             return
         }
 
-        if (!isLoggedIn) {
-            // User is not logged in, redirect to LoginActivity
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
-            finish()
-            return // Exit onCreate to prevent further execution
-        }
-
-        // Existing MainActivity logic
+        // Load MainActivity layout and content
         setContentView(R.layout.activity_main)
 
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.mainToolbar)
@@ -110,7 +103,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-
 
     // Show or Hide the SearchView
     private fun toggleSearchView() {

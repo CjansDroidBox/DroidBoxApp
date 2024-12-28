@@ -2,6 +2,7 @@
     <string name="app_name">DROIDBOX</string>
     <string name="search_hint">Search</string>
     <string name="account_button">Account</string>
+    <string name="default_web_client_id">325086392189-8sa9n0i0namvro5ufegebeh0a90v8khr.apps.googleusercontent.com</string>
 
 
 </resources>

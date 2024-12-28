@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "325086392189",
+    "project_id": "droidbox-b23d1",
+    "storage_bucket": "droidbox-b23d1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:325086392189:android:5c482b02286a2cf3546614",
+        "android_client_info": {
+          "package_name": "com.example.droidbox"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "325086392189-5tu8hlf7ql3o76249ket10rmmpcruejp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.droidbox",
+            "certificate_hash": "77590230da5d07631d09514da6400fda0dcbf690"
+          }
+        },
+        {
+          "client_id": "325086392189-8sa9n0i0namvro5ufegebeh0a90v8khr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfpqzYw6_YNiTH9tnpSa9qdug9Abr2hos"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "325086392189-8sa9n0i0namvro5ufegebeh0a90v8khr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
