@@ -22,6 +22,9 @@ Thumbs.db
 .externalNativeBuild
 .cxx
 
+# Ignore module-specific build directories
+cardstackview/build/
+
 # Ignore module directories
 DroidBoxApp/
 
