@@ -1,4 +1,4 @@
-package com.example.droidbox
+package com.example.droidbox.clta
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,6 +11,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
+import com.bumptech.glide.Glide
 
 class MainActivity : AppCompatActivity() {
 
@@ -102,6 +103,10 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
         })
+
+        // Glide dynamic images for account and search buttons
+        Glide.with(this).load(R.drawable.ic_account).into(accountButton)
+        Glide.with(this).load(R.drawable.ic_search).into(searchButton)
     }
 
     // Show or Hide the SearchView

@@ -1,0 +1,141 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <!-- Top Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="120dp">
+
+        <!-- Header Text -->
+        <TextView
+            android:id="@+id/signInHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage your Accounts"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/signInSubHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Switch and Continue Progress"
+            android:textSize="18sp"
+            android:textStyle="normal"
+            android:textAlignment="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- App Description -->
+        <TextView
+            android:id="@+id/appDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(CLTA or Community Language Training App is a DROIDBOX Project)"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:textAlignment="center"
+            android:layout_marginBottom="24dp" />
+    </LinearLayout>
+
+    <!-- Google Sign-In Section -->
+    <LinearLayout
+        android:id="@+id/googleSignInSection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="100dp">
+
+        <!-- Google Icon -->
+        <ImageView
+            android:id="@+id/googleIcon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/google_icon"
+            android:contentDescription="Google Icon"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Google Sign-Up Text -->
+        <TextView
+            android:id="@+id/googleSignInText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ONE TAP Sign In!"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"
+            android:textColor="@color/blue"/>
+
+        <!-- Google Sign-Up Subtext -->
+        <TextView
+            android:id="@+id/googleSignInSubText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Multi Account Management"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:layout_marginBottom="4dp"/>
+    </LinearLayout>
+
+    <!-- Bottom Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Droidbox Section -->
+        <LinearLayout
+            android:id="@+id/droidboxSection"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_weight="1">
+
+            <!-- Droidbox Image -->
+            <ImageView
+                android:id="@+id/droidboxImage"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/dancing_robot"
+                android:contentDescription="Droidbox Icon"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Droidbox Text -->
+            <TextView
+                android:id="@+id/droidboxText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DROIDBOX"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- CLTA Text -->
+            <TextView
+                android:id="@+id/cltaText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-CLTA-"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/buildVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Build Version: 2.0"
+                android:textStyle="italic"
+                android:textSize="10sp"
+                android:textAlignment="center" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

@@ -1,4 +1,4 @@
-package com.example.droidbox
+package com.example.droidbox.clta
 
 import android.os.Bundle
 import android.util.Log
