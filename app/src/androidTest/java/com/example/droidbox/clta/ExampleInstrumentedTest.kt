@@ -1,4 +1,4 @@
-package com.example.droidbox
+package com.example.droidbox.clta
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

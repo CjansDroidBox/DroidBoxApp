@@ -25,6 +25,7 @@ shapeimageview = "0.9.3"
 viewpager2 = "1.1.0"
 firebase-bom = "33.7.0"
 firebase-analytics = "22.1.2"
+firebaseStorageKtx = "21.0.1"
 
 
 
@@ -54,6 +55,7 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

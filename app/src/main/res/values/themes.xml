@@ -5,6 +5,8 @@
         <item name="colorPrimary">@color/toolbarBackground</item>
         <item name="colorPrimaryVariant">@color/toolbarBackground</item>
         <item name="colorOnPrimary">@color/toolbarIconColor</item>
+        <item name="android:colorBackground">@color/white</item> <!-- Day background -->
+        <item name="android:textColorPrimary">@color/black</item> <!-- Day text color -->
     </style>
 
     <!-- TabLayout Theme -->
@@ -13,4 +15,5 @@
         <item name="tabIconTint">?android:textColorPrimary</item> <!-- Adapts to Day/Night -->
         <item name="tabRippleColor">?android:colorControlHighlight</item>
     </style>
+
 </resources>

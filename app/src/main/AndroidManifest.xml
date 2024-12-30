@@ -29,13 +29,13 @@
             android:label="Profile Setting"
             android:exported="true" />
 
-        <activity android:name=".LoginActivity" />
-
         <activity android:name=".RegisterActivity" />
 
         <activity android:name=".FlashcardViewer" />
 
         <activity android:name=".FlashcardInput" />
+
+        <activity android:name=".SignInActivity" />
 
 
 

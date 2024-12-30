@@ -49,9 +49,9 @@
 
     <!-- Google Sign-In Section -->
     <LinearLayout
-        android:id="@+id/googleSignInSection"
+        android:id="@+id/googleSignUpSection"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="150dp"
         android:orientation="vertical"
         android:gravity="center"
         android:layout_marginBottom="100dp">
@@ -81,9 +81,10 @@
             android:id="@+id/googleSignUpSubText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="(Account Creation)"
-            android:textSize="14sp"
-            android:textAlignment="center" />
+            android:text="Account Creation"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:layout_marginBottom="4dp"/>
     </LinearLayout>
 
     <!-- Bottom Section -->

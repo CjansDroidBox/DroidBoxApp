@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.droidbox"
+    namespace = "com.example.droidbox.clta"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.droidbox"
+        applicationId = "com.example.droidbox.clta"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.storage.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

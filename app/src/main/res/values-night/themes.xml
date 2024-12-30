@@ -1,10 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base Day/Night Theme -->
+    <!-- Base Night Theme -->
     <style name="Theme.DROIDBOX" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- App-wide colors -->
-        <item name="colorPrimary">@color/toolbarBackground</item>
-        <item name="colorPrimaryVariant">@color/toolbarBackground</item>
-        <item name="colorOnPrimary">@color/toolbarIconColor</item>
+        <item name="colorPrimary">@color/black</item> <!-- Darker primary color -->
+        <item name="colorPrimaryVariant">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:colorBackground">@color/black</item> <!-- Night background -->
+        <item name="android:textColorPrimary">@color/white</item> <!-- Night text color -->
     </style>
 
     <!-- TabLayout Theme -->
