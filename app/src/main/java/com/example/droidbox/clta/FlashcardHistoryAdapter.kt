@@ -20,9 +20,11 @@ class FlashcardHistoryAdapter(private val historyList: List<FlashcardHistory>) :
     }
 
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
-        holder.historyText.text = historyList[position].text
+        val historyItem = historyList[position]
+        holder.historyText.text = "Flashcard \"${historyItem.sectionName}\" ${historyItem.action} on ${historyItem.dateTime}"
     }
 
     override fun getItemCount(): Int = historyList.size
 }
+
 

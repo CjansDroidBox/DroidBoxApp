@@ -1,6 +1,6 @@
-
 package com.example.droidbox.clta
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,10 +9,11 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.*
 
 class FlashcardsFragment : Fragment() {
 
@@ -33,7 +34,7 @@ class FlashcardsFragment : Fragment() {
 
     private val inputDataLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == AppCompatActivity.RESULT_OK) {
+            if (result.resultCode == Activity.RESULT_OK) {
                 val flashcards =
                     result.data?.getParcelableArrayListExtra<Flashcard>("flashcards")
                 if (selectedSectionName != null && flashcards != null) {
@@ -66,9 +67,12 @@ class FlashcardsFragment : Fragment() {
         addSectionButton.setOnClickListener { handleAddSection() }
         inputDataButton.setOnClickListener { handleInputData() }
         deleteSectionButton.setOnClickListener { handleDeleteSection() }
-        shareSectionButton.setOnClickListener { Toast.makeText(requireContext(), "Feature not implemented.", Toast.LENGTH_SHORT).show() }
+        shareSectionButton.setOnClickListener { handleShareSection() }
 
         return view
+
+
+
     }
 
     private fun handleAddSection() {
@@ -80,14 +84,6 @@ class FlashcardsFragment : Fragment() {
             ).show()
         } else {
             showAddSectionDialog()
-        }
-    }
-
-    private fun handleInputData() {
-        if (sectionData.isEmpty()) {
-            Toast.makeText(requireContext(), "Please add a section first!", Toast.LENGTH_SHORT).show()
-        } else {
-            showSectionSelectionDialog()
         }
     }
 
@@ -103,14 +99,53 @@ class FlashcardsFragment : Fragment() {
                 val sectionName = sectionNames[which]
                 sectionContainer.removeViewAt(which)
                 sectionData.remove(sectionName)
-                historyList.add(FlashcardHistory("Deleted Section: $sectionName"))
-                historyAdapter.notifyItemRemoved(which)
+
+                historyList.add(
+                    FlashcardHistory(
+                        action = "Deleted",
+                        sectionName = sectionName,
+                        dateTime = getCurrentDateTime()
+                    )
+                )
+                historyAdapter.notifyItemInserted(historyList.size - 1)
             }
             .create()
             .show()
     }
 
-    // UPDATED LOGIC: Modified showAddSectionDialog to use the existing addSectionButton
+    private fun handleShareSection() {
+        if (sectionData.isEmpty()) {
+            Toast.makeText(requireContext(), "No sections to share!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val sectionNames = sectionData.keys.toList()
+        AlertDialog.Builder(requireContext())
+            .setTitle("Share Section")
+            .setItems(sectionNames.toTypedArray()) { _, which ->
+                val sectionName = sectionNames[which]
+                historyList.add(
+                    FlashcardHistory(
+                        action = "Shared",
+                        sectionName = sectionName,
+                        dateTime = getCurrentDateTime()
+                    )
+                )
+                historyAdapter.notifyItemInserted(historyList.size - 1)
+                Toast.makeText(requireContext(), "Section \"$sectionName\" shared to public.", Toast.LENGTH_SHORT).show()
+            }
+            .create()
+            .show()
+    }
+
+    private fun handleInputData() {
+        if (sectionData.isEmpty()) {
+            Toast.makeText(requireContext(), "Please add a section first!", Toast.LENGTH_SHORT).show()
+        } else {
+            showSectionSelectionDialog()
+        }
+    }
+
     private fun showAddSectionDialog() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.flashcard_dialog_add_section, null)
@@ -127,7 +162,14 @@ class FlashcardsFragment : Fragment() {
                 if (!sectionData.containsKey(sectionName)) {
                     sectionData[sectionName] = mutableListOf()
                     addDynamicSection(sectionName)
-                    historyList.add(FlashcardHistory("Added Section: $sectionName"))
+
+                    historyList.add(
+                        FlashcardHistory(
+                            action = "Created",
+                            sectionName = sectionName,
+                            dateTime = getCurrentDateTime()
+                        )
+                    )
                     historyAdapter.notifyItemInserted(historyList.size - 1)
                     dialog.dismiss()
                 } else {
@@ -140,7 +182,6 @@ class FlashcardsFragment : Fragment() {
 
         dialog.show()
     }
-// END OF UPDATED LOGIC
 
     private fun addDynamicSection(sectionName: String) {
         val sectionView = LayoutInflater.from(requireContext())
@@ -149,6 +190,42 @@ class FlashcardsFragment : Fragment() {
         val startButton = sectionView.findViewById<Button>(R.id.startButton)
 
         sectionTitle.text = sectionName
+
+        sectionTitle.setOnClickListener {
+            val dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.flashcard_edit_section_name, null)
+            val editSectionName = dialogView.findViewById<EditText>(R.id.editSectionName)
+            val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
+
+            editSectionName.setText(sectionTitle.text)
+
+            val dialog = AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create()
+
+            saveButton.setOnClickListener {
+                val newName = editSectionName.text.toString().trim()
+                if (newName.isNotEmpty() && newName != sectionName) {
+                    sectionTitle.text = newName
+                    sectionData.remove(sectionName)?.let { flashcards ->
+                        sectionData[newName] = flashcards
+                    }
+                    historyList.add(
+                        FlashcardHistory(
+                            action = "Renamed",
+                            sectionName = "$sectionName → $newName",
+                            dateTime = getCurrentDateTime()
+                        )
+                    )
+                    historyAdapter.notifyItemInserted(historyList.size - 1)
+                    dialog.dismiss()
+                } else {
+                    Toast.makeText(requireContext(), "Invalid section name!", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            dialog.show()
+        }
 
         startButton.setOnClickListener {
             val flashcards = sectionData[sectionName] ?: mutableListOf()
@@ -177,5 +254,9 @@ class FlashcardsFragment : Fragment() {
             .create()
             .show()
     }
-}
 
+    private fun getCurrentDateTime(): String {
+        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return formatter.format(Date())
+    }
+}
