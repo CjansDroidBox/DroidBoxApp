@@ -3,6 +3,7 @@ package com.example.droidbox.clta
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,6 +26,9 @@ class FlashcardsFragment : Fragment() {
     private lateinit var shareSectionButton: Button
     private lateinit var inputDataButton: Button
     private lateinit var historyRecyclerView: RecyclerView
+
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var userUID: String
 
     private val historyList = mutableListOf<FlashcardHistory>()
     private lateinit var historyAdapter: FlashcardHistoryAdapter
@@ -38,12 +44,18 @@ class FlashcardsFragment : Fragment() {
                 val flashcards =
                     result.data?.getParcelableArrayListExtra<Flashcard>("flashcards")
                 if (selectedSectionName != null && flashcards != null) {
-                    sectionData[selectedSectionName]?.addAll(flashcards)
-                    Toast.makeText(
-                        requireContext(),
-                        "Flashcards added to $selectedSectionName!",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val sectionRef = firestore.collection("users")
+                        .document(userUID)
+                        .collection("sections")
+                        .document(selectedSectionName!!)
+
+                    sectionRef.update(
+                        "flashcards", flashcards.associate { it.title to mapOf("title" to it.title, "description" to it.description) }
+                    ).addOnSuccessListener {
+                        Toast.makeText(requireContext(), "Flashcards added to $selectedSectionName!", Toast.LENGTH_SHORT).show()
+                    }.addOnFailureListener {
+                        Toast.makeText(requireContext(), "Failed to save flashcards!", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -64,15 +76,48 @@ class FlashcardsFragment : Fragment() {
         historyRecyclerView.adapter = historyAdapter
         historyRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        firestore = FirebaseFirestore.getInstance()
+        userUID = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
         addSectionButton.setOnClickListener { handleAddSection() }
         inputDataButton.setOnClickListener { handleInputData() }
         deleteSectionButton.setOnClickListener { handleDeleteSection() }
         shareSectionButton.setOnClickListener { handleShareSection() }
 
+        listenForSections()
+
         return view
+    }
 
+    private fun listenForSections() {
+        firestore.collection("users").document(userUID).collection("sections")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("Firestore", "Error listening to sections: $error")
+                    return@addSnapshotListener
+                }
 
+                if (snapshot != null) {
+                    sectionData.clear()
+                    sectionContainer.removeAllViews()
 
+                    for (document in snapshot.documents) {
+                        val sectionName = document.getString("name") ?: "Unnamed Section"
+                        val flashcards = (document.get("flashcards") as? Map<*, *> ?: emptyMap<Any, Any>())
+                            .mapNotNull { (_, value) ->
+                                val cardMap = value as? Map<*, *>
+                                val title = cardMap?.get("title") as? String
+                                val description = cardMap?.get("description") as? String
+                                if (title != null && description != null) {
+                                    Flashcard(title, description)
+                                } else null
+                            }
+
+                        sectionData[sectionName] = flashcards.toMutableList()
+                        addDynamicSection(sectionName)
+                    }
+                }
+            }
     }
 
     private fun handleAddSection() {
@@ -82,9 +127,58 @@ class FlashcardsFragment : Fragment() {
                 "You can only add up to $MAX_SECTIONS_LIMITED_USER sections. Upgrade to premium for unlimited sections!",
                 Toast.LENGTH_SHORT
             ).show()
-        } else {
-            showAddSectionDialog()
+            return
         }
+
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.flashcard_dialog_add_section, null)
+        val sectionNameInput = dialogView.findViewById<EditText>(R.id.sectionNameInput)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<Button>(R.id.addSectionButton).setOnClickListener {
+            val sectionName = sectionNameInput.text.toString().trim()
+            if (sectionName.isNotEmpty()) {
+                if (sectionData.containsKey(sectionName)) {
+                    Toast.makeText(requireContext(), "Section with this name already exists!", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val sectionRef = firestore.collection("users")
+                    .document(userUID)
+                    .collection("sections")
+                    .document(sectionName)
+
+                sectionRef.set(
+                    mapOf(
+                        "name" to sectionName,
+                        "flashcards" to emptyMap<String, Map<String, String>>() // Default flashcards map
+                    )
+                ).addOnSuccessListener {
+                    Toast.makeText(requireContext(), "Section added!", Toast.LENGTH_SHORT).show()
+
+                    // Add to history
+                    historyList.add(
+                        FlashcardHistory(
+                            action = "Added",
+                            sectionName = sectionName,
+                            dateTime = getCurrentDateTime()
+                        )
+                    )
+                    historyAdapter.notifyItemInserted(historyList.size - 1)
+
+                    dialog.dismiss()
+                }.addOnFailureListener {
+                    Toast.makeText(requireContext(), "Failed to add section!", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Section name cannot be empty!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.show()
     }
 
     private fun handleDeleteSection() {
@@ -93,13 +187,51 @@ class FlashcardsFragment : Fragment() {
             return
         }
         val sectionNames = sectionData.keys.toList()
+
         AlertDialog.Builder(requireContext())
-            .setTitle("Delete Section")
+            .setTitle("Select Section to Delete")
             .setItems(sectionNames.toTypedArray()) { _, which ->
                 val sectionName = sectionNames[which]
-                sectionContainer.removeViewAt(which)
+
+                showDeleteConfirmationDialog(sectionName, which)
+            }
+            .create()
+            .show()
+    }
+
+    private fun showDeleteConfirmationDialog(sectionName: String, sectionIndex: Int) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.flashcard_delete_confirmation, null)
+        val sectionSelected = dialogView.findViewById<TextView>(R.id.sectionSelected)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelDeleteAccountButton)
+        val confirmButton = dialogView.findViewById<Button>(R.id.confirmDeleteAccountButton)
+
+        sectionSelected.text = sectionName
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        confirmButton.setOnClickListener {
+            if (sectionIndex >= sectionContainer.childCount) {
+                Toast.makeText(requireContext(), "Invalid section index.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val sectionRef = firestore.collection("users").document(userUID).collection("sections").document(sectionName)
+
+            sectionRef.delete().addOnSuccessListener {
+                // Remove section from local data
                 sectionData.remove(sectionName)
 
+                // Refresh UI to sync with updated data
+                refreshSections()
+
+                // Add deletion to history
                 historyList.add(
                     FlashcardHistory(
                         action = "Deleted",
@@ -108,10 +240,25 @@ class FlashcardsFragment : Fragment() {
                     )
                 )
                 historyAdapter.notifyItemInserted(historyList.size - 1)
+
+                Toast.makeText(requireContext(), "Section \"$sectionName\" deleted.", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }.addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to delete section!", Toast.LENGTH_SHORT).show()
             }
-            .create()
-            .show()
+        }
+
+        dialog.show()
     }
+
+    private fun refreshSections() {
+        // Clear the UI
+        sectionContainer.removeAllViews()
+
+        // Re-render all sections
+        sectionData.keys.forEach { addDynamicSection(it) }
+    }
+
 
     private fun handleShareSection() {
         if (sectionData.isEmpty()) {
@@ -146,43 +293,6 @@ class FlashcardsFragment : Fragment() {
         }
     }
 
-    private fun showAddSectionDialog() {
-        val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.flashcard_dialog_add_section, null)
-        val sectionNameInput = dialogView.findViewById<EditText>(R.id.sectionNameInput)
-        val addSectionButton = dialogView.findViewById<Button>(R.id.addSectionButton)
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        addSectionButton.setOnClickListener {
-            val sectionName = sectionNameInput.text.toString().trim()
-            if (sectionName.isNotEmpty()) {
-                if (!sectionData.containsKey(sectionName)) {
-                    sectionData[sectionName] = mutableListOf()
-                    addDynamicSection(sectionName)
-
-                    historyList.add(
-                        FlashcardHistory(
-                            action = "Created",
-                            sectionName = sectionName,
-                            dateTime = getCurrentDateTime()
-                        )
-                    )
-                    historyAdapter.notifyItemInserted(historyList.size - 1)
-                    dialog.dismiss()
-                } else {
-                    Toast.makeText(requireContext(), "Section already exists!", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(requireContext(), "Section name cannot be empty!", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        dialog.show()
-    }
-
     private fun addDynamicSection(sectionName: String) {
         val sectionView = LayoutInflater.from(requireContext())
             .inflate(R.layout.flashcard_dynamic_layout, sectionContainer, false)
@@ -206,19 +316,28 @@ class FlashcardsFragment : Fragment() {
             saveButton.setOnClickListener {
                 val newName = editSectionName.text.toString().trim()
                 if (newName.isNotEmpty() && newName != sectionName) {
-                    sectionTitle.text = newName
-                    sectionData.remove(sectionName)?.let { flashcards ->
-                        sectionData[newName] = flashcards
+                    if (sectionData.containsKey(newName)) {
+                        Toast.makeText(requireContext(), "Section with this name already exists!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val flashcards = sectionData.remove(sectionName)
+                        sectionData[newName] = flashcards ?: mutableListOf()
+                        refreshSections() // Refresh UI immediately
+                        val sectionRef = firestore.collection("users").document(userUID).collection("sections").document(sectionName)
+                        sectionRef.update("name", newName)
+                            .addOnSuccessListener {
+                                historyList.add(
+                                    FlashcardHistory(
+                                        action = "Renamed",
+                                        sectionName = "$sectionName → $newName",
+                                        dateTime = getCurrentDateTime()
+                                    )
+                                )
+                                historyAdapter.notifyItemInserted(historyList.size - 1)
+                            }.addOnFailureListener {
+                                Toast.makeText(requireContext(), "Failed to rename section!", Toast.LENGTH_SHORT).show()
+                            }
+                        dialog.dismiss()
                     }
-                    historyList.add(
-                        FlashcardHistory(
-                            action = "Renamed",
-                            sectionName = "$sectionName → $newName",
-                            dateTime = getCurrentDateTime()
-                        )
-                    )
-                    historyAdapter.notifyItemInserted(historyList.size - 1)
-                    dialog.dismiss()
                 } else {
                     Toast.makeText(requireContext(), "Invalid section name!", Toast.LENGTH_SHORT).show()
                 }
