@@ -40,7 +40,7 @@
             android:id="@+id/appDescription"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="(CLTA or Community Language Training App is a DROIDBOX Project)"
+            android:text="(CLTA or Community Language Training App is a Monwealth Project)"
             android:textSize="14sp"
             android:textStyle="italic"
             android:textAlignment="center"
@@ -117,7 +117,7 @@
                 android:id="@+id/droidboxText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DROIDBOX"
+                android:text="MONWEALTH"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
