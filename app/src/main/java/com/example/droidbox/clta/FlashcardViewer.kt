@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.Source
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager
 import com.yuyakaido.android.cardstackview.CardStackListener
 import com.yuyakaido.android.cardstackview.CardStackView
@@ -56,10 +55,16 @@ class FlashcardViewer : AppCompatActivity() {
         ttsSpeedButton = findViewById(R.id.ttsSpeedButton)
         val reshuffleButton: Button = findViewById(R.id.reshuffleButton)
         cardProgressTextView = findViewById(R.id.cardProgress)
+        val flashcardTitleTextView = findViewById<TextView>(R.id.flashcardTitle) // Initialize the TextView
 
-        // Retrieve Flashcards
+// Retrieve Flashcards and Section Name
         val cardsList: ArrayList<Flashcard> =
             intent.getParcelableArrayListExtra("flashcards") ?: arrayListOf()
+        val sectionName = intent.getStringExtra("sectionName") ?: "Untitled Section"
+
+// Set the section name in the title TextView
+        flashcardTitleTextView.text = sectionName
+
 
         if (cardsList.isEmpty()) {
             Toast.makeText(this, "No flashcards to display!", Toast.LENGTH_SHORT).show()
@@ -150,7 +155,7 @@ class FlashcardViewer : AppCompatActivity() {
 
     private fun fetchPreferencesFromFirestore(onPreferencesLoaded: () -> Unit) {
         firestore.collection("users").document(userUID)
-            .get(Source.SERVER)
+            .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val preferences = document.get("preferences") as? Map<*, *>
@@ -190,9 +195,8 @@ class FlashcardViewer : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        if (::flashcardTts.isInitialized) {
-            flashcardTts.shutdown()
-        }
         super.onDestroy()
+        flashcardTts.shutdown()
     }
+
 }

@@ -114,7 +114,7 @@ class FlashcardsFragment : Fragment() {
                             }
 
                         sectionData[sectionName] = flashcards.toMutableList()
-                        addDynamicSection(sectionName)
+                        addDynamicSection(sectionName) // Redraw the section dynamically
                     }
                 }
             }
@@ -301,6 +301,7 @@ class FlashcardsFragment : Fragment() {
 
         sectionTitle.text = sectionName
 
+        // Rename section logic
         sectionTitle.setOnClickListener {
             val dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.flashcard_edit_section_name, null)
@@ -319,12 +320,13 @@ class FlashcardsFragment : Fragment() {
                     if (sectionData.containsKey(newName)) {
                         Toast.makeText(requireContext(), "Section with this name already exists!", Toast.LENGTH_SHORT).show()
                     } else {
-                        val flashcards = sectionData.remove(sectionName)
-                        sectionData[newName] = flashcards ?: mutableListOf()
-                        refreshSections() // Refresh UI immediately
-                        val sectionRef = firestore.collection("users").document(userUID).collection("sections").document(sectionName)
-                        sectionRef.update("name", newName)
-                            .addOnSuccessListener {
+                        renameSection(sectionName, newName) { success ->
+                            if (success) {
+                                val flashcards = sectionData.remove(sectionName)
+                                sectionData[newName] = flashcards ?: mutableListOf()
+                                refreshSections() // Refresh UI immediately
+
+                                // Add rename action to history
                                 historyList.add(
                                     FlashcardHistory(
                                         action = "Renamed",
@@ -333,10 +335,12 @@ class FlashcardsFragment : Fragment() {
                                     )
                                 )
                                 historyAdapter.notifyItemInserted(historyList.size - 1)
-                            }.addOnFailureListener {
+
+                                dialog.dismiss()
+                            } else {
                                 Toast.makeText(requireContext(), "Failed to rename section!", Toast.LENGTH_SHORT).show()
                             }
-                        dialog.dismiss()
+                        }
                     }
                 } else {
                     Toast.makeText(requireContext(), "Invalid section name!", Toast.LENGTH_SHORT).show()
@@ -346,18 +350,84 @@ class FlashcardsFragment : Fragment() {
             dialog.show()
         }
 
+        // Start Button Logic
         startButton.setOnClickListener {
-            val flashcards = sectionData[sectionName] ?: mutableListOf()
-            if (flashcards.isEmpty()) {
-                Toast.makeText(requireContext(), "No flashcards to display!", Toast.LENGTH_SHORT).show()
-            } else {
-                val intent = Intent(requireContext(), FlashcardViewer::class.java)
-                intent.putParcelableArrayListExtra("flashcards", ArrayList(flashcards))
-                startActivity(intent)
-            }
+            firestore.collection("users")
+                .document(userUID)
+                .collection("sections")
+                .document(sectionName)
+                .get()
+                .addOnSuccessListener { document ->
+                    val flashcards = (document.get("flashcards") as? Map<*, *> ?: emptyMap<Any, Any>())
+                        .mapNotNull { (_, value) ->
+                            val cardMap = value as? Map<*, *>
+                            val title = cardMap?.get("title") as? String
+                            val description = cardMap?.get("description") as? String
+                            if (title != null && description != null) {
+                                Flashcard(title, description)
+                            } else null
+                        }
+
+                    if (flashcards.isEmpty()) {
+                        Toast.makeText(requireContext(), "No flashcards to display!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val intent = Intent(requireContext(), FlashcardViewer::class.java)
+                        intent.putParcelableArrayListExtra("flashcards", ArrayList(flashcards))
+                        intent.putExtra("sectionName", sectionName) // Pass the actual section name
+                        startActivity(intent)
+                    }
+                }
+                .addOnFailureListener {
+                    Toast.makeText(requireContext(), "Failed to load flashcards!", Toast.LENGTH_SHORT).show()
+                }
         }
 
         sectionContainer.addView(sectionView)
+    }
+
+    private fun renameSection(oldId: String, newId: String, onComplete: (Boolean) -> Unit) {
+        val oldRef = firestore.collection("users").document(userUID).collection("sections").document(oldId)
+        val newRef = firestore.collection("users").document(userUID).collection("sections").document(newId)
+
+        oldRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val data = document.data?.toMutableMap() ?: mutableMapOf()
+
+                // Update 'name' field
+                data["name"] = newId
+
+                // Set the new document with the updated data
+                newRef.set(data)
+                    .addOnSuccessListener {
+                        // Delete the old document
+                        oldRef.delete()
+                            .addOnSuccessListener {
+                                // Update sectionData map
+                                val flashcards = sectionData.remove(oldId)
+                                sectionData[newId] = flashcards ?: mutableListOf()
+
+                                // Refresh the UI
+                                refreshSections()
+
+                                onComplete(true) // Signal success
+                            }
+                            .addOnFailureListener {
+                                onComplete(false) // Signal failure
+                                Log.e("Firestore", "Failed to delete old section: $oldId")
+                            }
+                    }
+                    .addOnFailureListener {
+                        onComplete(false) // Signal failure
+                        Log.e("Firestore", "Failed to create new section: $newId")
+                    }
+            } else {
+                onComplete(false) // Signal failure
+                Log.e("Firestore", "Old section not found: $oldId")
+            }
+        }.addOnFailureListener {
+            onComplete(false) // Signal failure
+            Log.e("Firestore", "Failed to fetch old section: $oldId")
+        }
     }
 
     private fun showSectionSelectionDialog() {

@@ -10,7 +10,7 @@
         android:id="@+id/flashcardTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="FLASHCARDS"
+        android:text=""
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
