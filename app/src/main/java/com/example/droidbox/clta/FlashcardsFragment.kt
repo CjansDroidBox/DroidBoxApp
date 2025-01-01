@@ -15,11 +15,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import java.text.SimpleDateFormat
+import com.google.firebase.Timestamp
+
 import java.util.*
 
 class FlashcardsFragment : Fragment() {
 
+    // UI Elements
     private lateinit var sectionContainer: LinearLayout
     private lateinit var addSectionButton: Button
     private lateinit var deleteSectionButton: Button
@@ -27,14 +29,17 @@ class FlashcardsFragment : Fragment() {
     private lateinit var inputDataButton: Button
     private lateinit var historyRecyclerView: RecyclerView
 
+    // Firebase
     private lateinit var firestore: FirebaseFirestore
     private lateinit var userUID: String
 
+    // History and Sections Data
     private val historyList = mutableListOf<FlashcardHistory>()
     private lateinit var historyAdapter: FlashcardHistoryAdapter
-
     private val sectionData = mutableMapOf<String, MutableList<Flashcard>>()
     private var selectedSectionName: String? = null
+
+    // Constants
     private val MAX_SECTIONS_LIMITED_USER = 5
     private var isPremiumUser = false
 
@@ -65,6 +70,7 @@ class FlashcardsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_flashcards, container, false)
 
+        // Initialize UI
         sectionContainer = view.findViewById(R.id.sectionContainer)
         addSectionButton = view.findViewById(R.id.addSectionButton)
         deleteSectionButton = view.findViewById(R.id.deleteSectionButton)
@@ -72,21 +78,60 @@ class FlashcardsFragment : Fragment() {
         inputDataButton = view.findViewById(R.id.inputDataButton)
         historyRecyclerView = view.findViewById(R.id.historyRecyclerView)
 
+        // Initialize Adapter
         historyAdapter = FlashcardHistoryAdapter(historyList)
         historyRecyclerView.adapter = historyAdapter
         historyRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // Firebase Setup
         firestore = FirebaseFirestore.getInstance()
         userUID = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
+        // Set Button Listeners
         addSectionButton.setOnClickListener { handleAddSection() }
         inputDataButton.setOnClickListener { handleInputData() }
         deleteSectionButton.setOnClickListener { handleDeleteSection() }
         shareSectionButton.setOnClickListener { handleShareSection() }
 
         listenForSections()
+        fetchHistoryFromFirestore() // Fetch history data on initialization
 
         return view
+    }
+
+    private fun fetchHistoryFromFirestore() {
+        firestore.collection("users")
+            .document(userUID)
+            .collection("history")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.isEmpty) {
+                    val retrievedHistory = snapshot.documents.mapNotNull { document ->
+                        val action = document.getString("action") ?: return@mapNotNull null
+                        val sectionName = document.getString("sectionName") ?: return@mapNotNull null
+                        val previousName = document.getString("previousName")
+                        val dateTime = document.getTimestamp("dateTime") ?: return@mapNotNull null
+                        val detailsMap = document.get("details") as? Map<*, *>
+                        val shared = detailsMap?.get("shared") as? Boolean ?: false
+                        val downloaded = detailsMap?.get("downloaded") as? Boolean ?: false
+
+                        FlashcardHistory(
+                            action = action,
+                            sectionName = sectionName,
+                            previousName = previousName,
+                            dateTime = dateTime,
+                            details = Details(shared = shared, downloaded = downloaded)
+                        )
+                    }
+
+                    historyList.clear()
+                    historyList.addAll(retrievedHistory)
+                    historyAdapter.notifyDataSetChanged()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to fetch history data.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun listenForSections() {
@@ -444,8 +489,8 @@ class FlashcardsFragment : Fragment() {
             .show()
     }
 
-    private fun getCurrentDateTime(): String {
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        return formatter.format(Date())
+    private fun getCurrentDateTime(): Timestamp {
+        return Timestamp.now() // Firestore's server timestamp
     }
+
 }
