@@ -5,11 +5,10 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import java.util.Locale
 
-class FlashcardTts(context: Context) : TextToSpeech.OnInitListener {
+class FlashcardTts(context: Context, private val initialLanguage: String, private val initialSpeechRate: Float) : TextToSpeech.OnInitListener {
 
     private var tts: TextToSpeech = TextToSpeech(context, this)
     private var isInitialized = false
-    private var speechRate = 1.0f // Default speed
 
     // Supported languages
     val supportedLanguages: Map<String, Locale> = mapOf(
@@ -37,8 +36,8 @@ class FlashcardTts(context: Context) : TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts.language = Locale.ENGLISH // Default language
-            tts.setSpeechRate(speechRate)
+            changeLanguage(initialLanguage)
+            adjustSpeechRate(initialSpeechRate)
             isInitialized = true
         } else {
             Log.e("FlashcardTts", "TTS initialization failed.")
@@ -54,19 +53,17 @@ class FlashcardTts(context: Context) : TextToSpeech.OnInitListener {
     }
 
     fun changeLanguage(language: String) {
-        if (isInitialized) {
-            val locale = supportedLanguages[language]
-            if (locale != null) {
-                tts.language = locale
-            } else {
-                Log.e("FlashcardTts", "Unsupported language: $language")
-            }
+        val locale = supportedLanguages[language]
+        if (locale != null) {
+            tts.language = locale
+            Log.d("TTS", "Language changed to $language with locale $locale")
+        } else {
+            Log.e("TTS", "Language $language is not supported.")
         }
     }
 
     fun adjustSpeechRate(rate: Float) {
-        speechRate = rate
-        tts.setSpeechRate(speechRate)
+        tts.setSpeechRate(rate)
     }
 
     fun shutdown() {

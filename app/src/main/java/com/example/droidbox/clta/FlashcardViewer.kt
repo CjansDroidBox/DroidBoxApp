@@ -2,10 +2,15 @@ package com.example.droidbox.clta
 
 import android.app.AlertDialog
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager
 import com.yuyakaido.android.cardstackview.CardStackListener
 import com.yuyakaido.android.cardstackview.CardStackView
@@ -26,9 +31,23 @@ class FlashcardViewer : AppCompatActivity() {
     private var currentCardPosition = 0
     private var totalCards = 0
 
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var userUID: String
+    private var selectedLanguage: String = "English"
+    private var selectedTtsSpeed: Float = 1.0f
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.flashcard_viewer)
+
+        // Initialize Firestore and User ID
+        firestore = FirebaseFirestore.getInstance()
+        userUID = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        if (userUID.isEmpty()) {
+            Toast.makeText(this, "User not logged in. Preferences cannot be loaded.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         // Initialize Views
         cardStackView = findViewById(R.id.cardStackView)
@@ -37,9 +56,6 @@ class FlashcardViewer : AppCompatActivity() {
         ttsSpeedButton = findViewById(R.id.ttsSpeedButton)
         val reshuffleButton: Button = findViewById(R.id.reshuffleButton)
         cardProgressTextView = findViewById(R.id.cardProgress)
-
-        // Initialize TTS
-        flashcardTts = FlashcardTts(this)
 
         // Retrieve Flashcards
         val cardsList: ArrayList<Flashcard> =
@@ -53,7 +69,6 @@ class FlashcardViewer : AppCompatActivity() {
 
         // Shuffle the deck
         cardsList.shuffle()
-
         totalCards = cardsList.size
         cardProgressTextView.text = "1 out of $totalCards"
 
@@ -75,15 +90,20 @@ class FlashcardViewer : AppCompatActivity() {
             override fun onCardDisappeared(view: android.view.View?, position: Int) {}
         })
 
-        // Adjust stacking behavior
-        cardStackLayoutManager.setVisibleCount(5) // Show 5 cards in the stack
-        cardStackLayoutManager.setTranslationInterval(8.0f) // Adjust vertical spacing for layers
-        cardStackLayoutManager.setScaleInterval(0.9f) // Scale cards for a deck-like effect
-        cardStackLayoutManager.setMaxDegree(0f) // Prevent rotation for a clean stack
+        cardStackLayoutManager.setVisibleCount(5)
+        cardStackLayoutManager.setTranslationInterval(8.0f)
+        cardStackLayoutManager.setScaleInterval(0.9f)
+        cardStackLayoutManager.setMaxDegree(0f)
 
-        flashcardAdapter = FlashcardAdapter(cardsList, flashcardTts.getTts())
-        cardStackView.layoutManager = cardStackLayoutManager
-        cardStackView.adapter = flashcardAdapter
+        // Fetch preferences, then initialize TTS and the adapter
+        fetchPreferencesFromFirestore {
+            flashcardTts = FlashcardTts(this, selectedLanguage, selectedTtsSpeed)
+
+            // Initialize the adapter after TTS is initialized
+            flashcardAdapter = FlashcardAdapter(cardsList, flashcardTts.getTts())
+            cardStackView.layoutManager = cardStackLayoutManager
+            cardStackView.adapter = flashcardAdapter
+        }
 
         // Reshuffle button
         reshuffleButton.setOnClickListener {
@@ -104,9 +124,10 @@ class FlashcardViewer : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle("Select Language")
                 .setItems(languages) { _, which ->
-                    flashcardTts.changeLanguage(languages[which])
-                    Toast.makeText(this, "Language set to ${languages[which]}", Toast.LENGTH_SHORT)
-                        .show()
+                    val newLanguage = languages[which]
+                    flashcardTts.changeLanguage(newLanguage)
+                    selectedLanguage = newLanguage
+                    savePreferencesToFirestore(newLanguage, selectedTtsSpeed)
                 }
                 .show()
         }
@@ -118,16 +139,60 @@ class FlashcardViewer : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle("Select TTS Speed")
                 .setItems(speeds) { _, which ->
-                    flashcardTts.adjustSpeechRate(rates[which])
-                    Toast.makeText(this, "TTS speed set to ${speeds[which]}", Toast.LENGTH_SHORT)
-                        .show()
+                    val newSpeed = rates[which]
+                    flashcardTts.adjustSpeechRate(newSpeed)
+                    selectedTtsSpeed = newSpeed
+                    savePreferencesToFirestore(selectedLanguage, newSpeed)
                 }
                 .show()
         }
     }
 
+    private fun fetchPreferencesFromFirestore(onPreferencesLoaded: () -> Unit) {
+        firestore.collection("users").document(userUID)
+            .get(Source.SERVER)
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val preferences = document.get("preferences") as? Map<*, *>
+                    if (preferences != null) {
+                        selectedLanguage = preferences["language"] as? String ?: "English"
+                        selectedTtsSpeed = when (val speed = preferences["ttsSpeed"]) {
+                            is Double -> speed.toFloat()
+                            is String -> speed.toFloatOrNull() ?: 1.0f
+                            else -> 1.0f
+                        }
+                    }
+                }
+                onPreferencesLoaded()
+            }
+            .addOnFailureListener {
+                Log.e("Firestore", "Failed to load preferences: ${it.message}")
+                Toast.makeText(this, "Failed to load preferences.", Toast.LENGTH_SHORT).show()
+                onPreferencesLoaded()
+            }
+    }
+
+    private fun savePreferencesToFirestore(language: String, ttsSpeed: Float) {
+        val preferences = mapOf(
+            "language" to language,
+            "ttsSpeed" to ttsSpeed
+        )
+        firestore.collection("users").document(userUID)
+            .set(mapOf("preferences" to preferences), SetOptions.merge())
+            .addOnSuccessListener {
+                Log.d("Firestore", "Preferences saved: Language=$language, TTS Speed=$ttsSpeed")
+                Toast.makeText(this, "Preferences saved successfully!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Log.e("Firestore", "Failed to save preferences: ${it.message}")
+                Toast.makeText(this, "Failed to save preferences.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     override fun onDestroy() {
-        flashcardTts.shutdown()
+        if (::flashcardTts.isInitialized) {
+            flashcardTts.shutdown()
+        }
         super.onDestroy()
     }
 }

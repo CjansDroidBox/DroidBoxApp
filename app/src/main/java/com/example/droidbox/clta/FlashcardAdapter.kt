@@ -67,7 +67,6 @@ class FlashcardAdapter(
     }
 
     class FlashcardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val cardView: View = itemView.findViewById(R.id.cardView)
         val frontSide: View = itemView.findViewById(R.id.frontSide)
         val backSide: View = itemView.findViewById(R.id.backSide)
         val frontTitle: TextView = itemView.findViewById(R.id.frontDeckTitle)

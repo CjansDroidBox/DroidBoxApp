@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:layout_marginBottom="120dp">
+        android:layout_marginBottom="50dp">
 
         <!-- Header Text -->
         <TextView
@@ -40,7 +40,7 @@
             android:id="@+id/appDescription"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="(CLTA or Community Language Training App is a DROIDBOX Project)"
+            android:text="(CLTA or Community Language Training App is a Qtm-P6 Project)"
             android:textSize="14sp"
             android:textStyle="italic"
             android:textAlignment="center"
@@ -54,7 +54,7 @@
         android:layout_height="150dp"
         android:orientation="vertical"
         android:gravity="center"
-        android:layout_marginBottom="100dp">
+        android:layout_marginBottom="20dp">
 
         <!-- Google Icon -->
         <ImageView
@@ -87,6 +87,25 @@
             android:layout_marginBottom="4dp"/>
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/googleSignInButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign In with Google!"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="5dp"
+        android:textColor="@color/blue"/>
+
+    <TextView
+        android:id="@+id/googleSignInDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Already have an account? Sign in here!"
+        android:textSize="10sp"
+        android:textStyle="italic"
+        android:layout_marginBottom="100dp"/>
+
     <!-- Bottom Section -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -117,7 +136,7 @@
                 android:id="@+id/droidboxText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DROIDBOX"
+                android:text="QTM-P6"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
