@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.GestureDetector
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -95,9 +97,38 @@ class FlashcardsFragment : Fragment() {
 
         listenForSections()
         fetchHistoryFromFirestore() // Fetch history data on initialization
+        setupRecyclerViewLongPress()
+
 
         return view
     }
+
+    private fun clearHistoryInFirestore(onComplete: (Boolean) -> Unit) {
+        firestore.collection("users")
+            .document(userUID)
+            .collection("history")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val batch = firestore.batch()
+                snapshot.documents.forEach { batch.delete(it.reference) }
+                batch.commit()
+                    .addOnSuccessListener {
+                        historyList.clear()
+                        historyAdapter.notifyDataSetChanged()
+                        Log.d("Firestore", "History cleared successfully.")
+                        onComplete(true)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Failed to clear history: ${e.message}")
+                        onComplete(false)
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Failed to fetch history for clearing: ${e.message}")
+                onComplete(false)
+            }
+    }
+
 
     private fun fetchHistoryFromFirestore() {
         firestore.collection("users")
@@ -105,6 +136,7 @@ class FlashcardsFragment : Fragment() {
             .collection("history")
             .get()
             .addOnSuccessListener { snapshot ->
+                Log.d("Firestore", "Fetched history snapshot: ${snapshot.documents}")
                 if (!snapshot.isEmpty) {
                     val retrievedHistory = snapshot.documents.mapNotNull { document ->
                         val action = document.getString("action") ?: return@mapNotNull null
@@ -127,11 +159,61 @@ class FlashcardsFragment : Fragment() {
                     historyList.clear()
                     historyList.addAll(retrievedHistory)
                     historyAdapter.notifyDataSetChanged()
+
+                    Log.d("Firestore", "History list after fetch: $historyList")
                 }
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Failed to fetch history: ${e.message}")
                 Toast.makeText(requireContext(), "Failed to fetch history data.", Toast.LENGTH_SHORT).show()
             }
+    }
+
+
+    private fun setupRecyclerViewLongPress() {
+        val gestureDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                val child = historyRecyclerView.findChildViewUnder(e.x, e.y)
+                if (child != null) {
+                    showClearHistoryDialog()
+                }
+            }
+        })
+
+        historyRecyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                gestureDetector.onTouchEvent(e)
+                return false
+            }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
+            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+        })
+    }
+
+    private fun showClearHistoryDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.clear_flashcard_history, null)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelDeleteHistoryButton)
+        val confirmButton = dialogView.findViewById<Button>(R.id.confirmDeleteHistoryButton)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        cancelButton.setOnClickListener { dialog.dismiss() }
+
+        confirmButton.setOnClickListener {
+            clearHistoryInFirestore { success ->
+                if (success) {
+                    Toast.makeText(requireContext(), "History cleared successfully.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Failed to clear history.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun listenForSections() {
@@ -204,17 +286,28 @@ class FlashcardsFragment : Fragment() {
                 ).addOnSuccessListener {
                     Toast.makeText(requireContext(), "Section added!", Toast.LENGTH_SHORT).show()
 
-                    // Add to history
-                    historyList.add(
-                        FlashcardHistory(
-                            action = "Added",
-                            sectionName = sectionName,
-                            dateTime = getCurrentDateTime()
-                        )
-                    )
-                    historyAdapter.notifyItemInserted(historyList.size - 1)
+                    // Add to history in Firestore
+                    val historyRef = firestore.collection("users")
+                        .document(userUID)
+                        .collection("history")
+                        .document()
 
-                    dialog.dismiss()
+                    val historyItem = FlashcardHistory(
+                        action = "Added",
+                        sectionName = sectionName,
+                        dateTime = getCurrentDateTime()
+                    )
+
+                    historyRef.set(historyItem)
+                        .addOnSuccessListener {
+                            // Add to local historyList
+                            historyList.add(historyItem)
+                            historyAdapter.notifyItemInserted(historyList.size - 1)
+                            dialog.dismiss()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(requireContext(), "Failed to add history to Firestore.", Toast.LENGTH_SHORT).show()
+                        }
                 }.addOnFailureListener {
                     Toast.makeText(requireContext(), "Failed to add section!", Toast.LENGTH_SHORT).show()
                 }
@@ -267,7 +360,10 @@ class FlashcardsFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val sectionRef = firestore.collection("users").document(userUID).collection("sections").document(sectionName)
+            val sectionRef = firestore.collection("users")
+                .document(userUID)
+                .collection("sections")
+                .document(sectionName)
 
             sectionRef.delete().addOnSuccessListener {
                 // Remove section from local data
@@ -276,15 +372,27 @@ class FlashcardsFragment : Fragment() {
                 // Refresh UI to sync with updated data
                 refreshSections()
 
-                // Add deletion to history
-                historyList.add(
-                    FlashcardHistory(
-                        action = "Deleted",
-                        sectionName = sectionName,
-                        dateTime = getCurrentDateTime()
-                    )
+                // Add deletion to Firestore history
+                val historyRef = firestore.collection("users")
+                    .document(userUID)
+                    .collection("history")
+                    .document()
+
+                val historyItem = FlashcardHistory(
+                    action = "Deleted",
+                    sectionName = sectionName,
+                    dateTime = getCurrentDateTime()
                 )
-                historyAdapter.notifyItemInserted(historyList.size - 1)
+
+                historyRef.set(historyItem)
+                    .addOnSuccessListener {
+                        // Add to local historyList
+                        historyList.add(historyItem)
+                        historyAdapter.notifyItemInserted(historyList.size - 1)
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(requireContext(), "Failed to add deletion to history.", Toast.LENGTH_SHORT).show()
+                    }
 
                 Toast.makeText(requireContext(), "Section \"$sectionName\" deleted.", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
@@ -316,15 +424,30 @@ class FlashcardsFragment : Fragment() {
             .setTitle("Share Section")
             .setItems(sectionNames.toTypedArray()) { _, which ->
                 val sectionName = sectionNames[which]
-                historyList.add(
-                    FlashcardHistory(
-                        action = "Shared",
-                        sectionName = sectionName,
-                        dateTime = getCurrentDateTime()
-                    )
+
+                // Add the "Shared" action to Firestore
+                val historyRef = firestore.collection("users")
+                    .document(userUID)
+                    .collection("history")
+                    .document()
+
+                val historyItem = FlashcardHistory(
+                    action = "Shared",
+                    sectionName = sectionName,
+                    dateTime = getCurrentDateTime()
                 )
-                historyAdapter.notifyItemInserted(historyList.size - 1)
-                Toast.makeText(requireContext(), "Section \"$sectionName\" shared to public.", Toast.LENGTH_SHORT).show()
+
+                historyRef.set(historyItem)
+                    .addOnSuccessListener {
+                        // Add to local history list
+                        historyList.add(historyItem)
+                        historyAdapter.notifyItemInserted(historyList.size - 1)
+                        Toast.makeText(requireContext(), "Section \"$sectionName\" shared to public.", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(requireContext(), "Failed to log shared action in Firestore.", Toast.LENGTH_SHORT).show()
+                        Log.e("Firestore", "Failed to log shared action: ${it.message}")
+                    }
             }
             .create()
             .show()
@@ -367,20 +490,7 @@ class FlashcardsFragment : Fragment() {
                     } else {
                         renameSection(sectionName, newName) { success ->
                             if (success) {
-                                val flashcards = sectionData.remove(sectionName)
-                                sectionData[newName] = flashcards ?: mutableListOf()
                                 refreshSections() // Refresh UI immediately
-
-                                // Add rename action to history
-                                historyList.add(
-                                    FlashcardHistory(
-                                        action = "Renamed",
-                                        sectionName = "$sectionName → $newName",
-                                        dateTime = getCurrentDateTime()
-                                    )
-                                )
-                                historyAdapter.notifyItemInserted(historyList.size - 1)
-
                                 dialog.dismiss()
                             } else {
                                 Toast.makeText(requireContext(), "Failed to rename section!", Toast.LENGTH_SHORT).show()
@@ -451,9 +561,33 @@ class FlashcardsFragment : Fragment() {
                                 val flashcards = sectionData.remove(oldId)
                                 sectionData[newId] = flashcards ?: mutableListOf()
 
+                                // Add to history in Firestore
+                                val historyRef = firestore.collection("users")
+                                    .document(userUID)
+                                    .collection("history")
+                                    .document()
+
+                                val historyItem = FlashcardHistory(
+                                    action = "Renamed",
+                                    sectionName = newId,
+                                    previousName = oldId,
+                                    dateTime = getCurrentDateTime()
+                                )
+
+                                historyRef.set(historyItem)
+                                    .addOnSuccessListener {
+                                        // Avoid duplicate entries by ensuring no redundant additions
+                                        if (!historyList.any { it.dateTime == historyItem.dateTime && it.action == "Renamed" }) {
+                                            historyList.add(historyItem)
+                                            historyAdapter.notifyItemInserted(historyList.size - 1)
+                                        }
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Firestore", "Failed to add renamed action to Firestore: ${it.message}")
+                                    }
+
                                 // Refresh the UI
                                 refreshSections()
-
                                 onComplete(true) // Signal success
                             }
                             .addOnFailureListener {

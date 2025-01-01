@@ -31,8 +31,14 @@ class FlashcardHistoryAdapter(
 
         holder.actionTextView.text = historyItem.action
         holder.sectionNameTextView.text = "Section: ${historyItem.sectionName}"
-        holder.previousNameTextView.text =
-            historyItem.previousName?.let { "Previous: $it" } ?: ""
+
+        // Show previous name only if available
+        if (historyItem.previousName != null) {
+            holder.previousNameTextView.visibility = View.VISIBLE
+            holder.previousNameTextView.text = "Previous: ${historyItem.previousName}"
+        } else {
+            holder.previousNameTextView.visibility = View.GONE
+        }
 
         // Format the dateTime field
         val formattedDate = historyItem.dateTime.let { timestamp ->
@@ -41,6 +47,7 @@ class FlashcardHistoryAdapter(
 
         holder.dateTimeTextView.text = formattedDate
     }
+
 
     override fun getItemCount(): Int = historyList.size
 }
