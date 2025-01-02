@@ -425,28 +425,64 @@ class FlashcardsFragment : Fragment() {
             .setItems(sectionNames.toTypedArray()) { _, which ->
                 val sectionName = sectionNames[which]
 
-                // Add the "Shared" action to Firestore
-                val historyRef = firestore.collection("users")
-                    .document(userUID)
-                    .collection("history")
-                    .document()
+                // Add the "Shared" section to Firestore's shared_content collection
+                val sharedContentRef = FirebaseFirestore.getInstance().collection("shared_content")
+                    .document() // Auto-generate a unique document ID
 
-                val historyItem = FlashcardHistory(
-                    action = "Shared",
-                    sectionName = sectionName,
-                    dateTime = getCurrentDateTime()
+                val sharedContent = mapOf(
+                    "title" to "Section: $sectionName",
+                    "description" to "Shared on ${getCurrentDateTime().toDate()}",
+                    "dateTime" to getCurrentDateTime(),
+                    "sharedBy" to userUID, // Include the UID of the user who shared the content
+                    "details" to mapOf(
+                        "shared" to true,
+                        "downloaded" to false
+                    )
                 )
 
-                historyRef.set(historyItem)
+                sharedContentRef.set(sharedContent)
                     .addOnSuccessListener {
-                        // Add to local history list
-                        historyList.add(historyItem)
-                        historyAdapter.notifyItemInserted(historyList.size - 1)
-                        Toast.makeText(requireContext(), "Section \"$sectionName\" shared to public.", Toast.LENGTH_SHORT).show()
+                        // Add the "Shared" action to the user's history
+                        val historyRef = firestore.collection("users")
+                            .document(userUID)
+                            .collection("history")
+                            .document()
+
+                        val historyItem = FlashcardHistory(
+                            action = "Shared",
+                            sectionName = sectionName,
+                            dateTime = getCurrentDateTime(),
+                            details = Details(shared = true, downloaded = false)
+                        )
+
+                        historyRef.set(historyItem)
+                            .addOnSuccessListener {
+                                // Add to local history list
+                                historyList.add(historyItem)
+                                historyAdapter.notifyItemInserted(historyList.size - 1)
+
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Section \"$sectionName\" shared successfully!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            .addOnFailureListener {
+                                Log.e("Firestore", "Failed to log history: ${it.message}")
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to log share action in history.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                     }
-                    .addOnFailureListener {
-                        Toast.makeText(requireContext(), "Failed to log shared action in Firestore.", Toast.LENGTH_SHORT).show()
-                        Log.e("Firestore", "Failed to log shared action: ${it.message}")
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Failed to share section: ${e.message}")
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to share section \"$sectionName\".",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
             }
             .create()

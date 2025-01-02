@@ -15,12 +15,9 @@
         app:navigationIconTint="?attr/colorOnPrimary"
         android:elevation="4dp">
 
-        <!-- Toolbar Content -->
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
@@ -33,7 +30,7 @@
                 android:textColor="?attr/colorOnPrimary"
                 android:textStyle="bold"
                 android:textSize="20sp"
-                android:gravity="center_vertical" />
+                android:layout_centerVertical="true" />
 
             <TextView
                 android:id="@+id/appDescription"
@@ -43,13 +40,10 @@
                 android:textColor="?attr/colorOnPrimary"
                 android:textStyle="italic"
                 android:textSize="10sp"
-                android:gravity="center_vertical" />
-
-            <!-- Spacer -->
-            <View
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_centerVertical="true"
+                android:layout_toEndOf="@id/appTitle"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="150dp" />
 
             <!-- Search Icon -->
             <ImageView
@@ -59,7 +53,37 @@
                 android:src="@drawable/ic_search"
                 android:contentDescription="Search"
                 android:padding="8dp"
-                app:tint="?attr/colorOnPrimary" />
+                app:tint="?attr/colorOnPrimary"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="96dp"
+                android:layout_centerVertical="true" />
+
+            <!-- Notification Button -->
+            <ImageView
+                android:id="@+id/notificationButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_notification_bell"
+                android:contentDescription="Notifications"
+                android:padding="8dp"
+                app:tint="?attr/colorOnPrimary"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="48dp"
+                android:layout_centerVertical="true" />
+
+            <!-- Notification Badge -->
+            <TextView
+                android:id="@+id/notificationBadge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:text="0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_alignEnd="@+id/notificationButton"
+                android:layout_alignTop="@+id/notificationButton"
+                android:visibility="gone"
+                android:textColor="@color/red"/>
 
             <!-- Account Button -->
             <ImageView
@@ -69,8 +93,10 @@
                 android:src="@drawable/ic_account"
                 android:contentDescription="Account"
                 android:padding="8dp"
-                app:tint="?attr/colorOnPrimary" />
-        </LinearLayout>
+                app:tint="?attr/colorOnPrimary"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true" />
+        </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
 
     <!-- SearchView -->
@@ -98,6 +124,13 @@
         android:layout_height="1dp"
         android:background="?attr/colorPrimary"
         android:elevation="4dp" />
+
+    <!-- FrameLayout to Replace Fragments Dynamically -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <!-- ViewPager2 -->
     <androidx.viewpager2.widget.ViewPager2

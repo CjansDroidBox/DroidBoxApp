@@ -1,77 +1,92 @@
 package com.example.droidbox.clta
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragment : Fragment() {
 
-    private lateinit var homeRecyclerView: RecyclerView
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: HomeContentAdapter
+    private lateinit var emptyStateTextView: TextView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
-    private val postsList: MutableList<Post> = mutableListOf()
-    private lateinit var postsAdapter: PostsAdapter
+
+    private val contentList = mutableListOf<HomeContent>() // List for content
+    private val filteredList = mutableListOf<HomeContent>() // Filtered content
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        homeRecyclerView = view.findViewById(R.id.homeRecyclerView)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+        recyclerView = view.findViewById(R.id.homeRecyclerView)
+        emptyStateTextView = view.findViewById(R.id.emptyStateTextView)
 
-        // Initialize RecyclerView
-        postsAdapter = PostsAdapter(postsList) { post -> showDeleteConfirmationDialog(post) }
-        homeRecyclerView.adapter = postsAdapter
-        homeRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        adapter = HomeContentAdapter(filteredList)
+        recyclerView.adapter = adapter
 
-        // Handle swipe-to-refresh
-        swipeRefreshLayout.setOnRefreshListener {
-            refreshPosts()
-        }
+        loadContentFromFirestore()
+
+        swipeRefreshLayout.setOnRefreshListener { loadContentFromFirestore() }
 
         return view
     }
 
-    private fun refreshPosts() {
-        // Logic to fetch updated posts from the source
-        postsAdapter.updateData(postsList)
-        swipeRefreshLayout.isRefreshing = false
-        Log.d("HomeFragment", "Posts refreshed")
-    }
+    private fun loadContentFromFirestore() {
+        FirebaseFirestore.getInstance().collection("shared_content")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                swipeRefreshLayout.isRefreshing = false
+                if (snapshot.isEmpty) {
+                    showEmptyState(true)
+                    return@addOnSuccessListener
+                }
 
-    private fun showDeleteConfirmationDialog(post: Post) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete Post")
-            .setMessage("Are you sure you want to delete this post?")
-            .setPositiveButton("Delete") { _, _ ->
-                deletePost(post)
+                val fetchedContent = snapshot.documents.mapNotNull { document ->
+                    val title = document.getString("title") ?: return@mapNotNull null
+                    val description = document.getString("description") ?: return@mapNotNull null
+                    HomeContent(title, description)
+                }
+
+                contentList.clear()
+                contentList.addAll(fetchedContent)
+                filteredList.clear()
+                filteredList.addAll(contentList)
+                adapter.notifyDataSetChanged()
+                showEmptyState(filteredList.isEmpty())
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+            .addOnFailureListener { e ->
+                swipeRefreshLayout.isRefreshing = false
+                Toast.makeText(requireContext(), "Failed to load shared content.", Toast.LENGTH_SHORT).show()
+                showEmptyState(true)
+            }
     }
 
-    private fun deletePost(post: Post) {
-        postsList.remove(post)
-        postsAdapter.updateData(postsList)
-        Log.d("HomeFragment", "Post deleted: $post")
+    private fun showEmptyState(show: Boolean) {
+        emptyStateTextView.visibility = if (show) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (show) View.GONE else View.VISIBLE
     }
 
     fun filterContent(query: String) {
-        val filteredPosts = postsList.filter {
-            it.title.contains(query, ignoreCase = true) || it.content.contains(query, ignoreCase = true)
-        }
-        postsAdapter.updateData(filteredPosts)
-    }
-
-    fun addPostFromOtherTabs(post: Post) {
-        postsList.add(0, post)
-        postsAdapter.updateData(postsList)
+        val lowercaseQuery = query.lowercase()
+        filteredList.clear()
+        filteredList.addAll(
+            contentList.filter {
+                it.title.lowercase().contains(lowercaseQuery) ||
+                        it.description.lowercase().contains(lowercaseQuery)
+            }
+        )
+        adapter.notifyDataSetChanged()
+        showEmptyState(filteredList.isEmpty())
     }
 }

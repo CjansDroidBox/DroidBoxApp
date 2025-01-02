@@ -2,8 +2,10 @@ package com.example.droidbox.clta
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -11,29 +13,35 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.bumptech.glide.Glide
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var searchView: SearchView
     private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
+
+    private lateinit var notificationButton: ImageView
+    private lateinit var notificationBadge: TextView
+    private var unreadNotificationsCount = 0
+
+    private var homeFragment: HomeFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         firebaseAuth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
-        // Check user authentication state
         val currentUser = firebaseAuth.currentUser
         if (currentUser == null) {
-            // Redirect to RegisterActivity if no user is logged in
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
             finish()
             return
         }
 
-        // Load MainActivity layout and content
         setContentView(R.layout.activity_main)
 
         val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.mainToolbar)
@@ -43,14 +51,14 @@ class MainActivity : AppCompatActivity() {
         val viewPager: ViewPager2 = findViewById(R.id.viewPager)
         searchView = findViewById(R.id.searchView)
 
-        val iconColorDefault = ContextCompat.getColor(this, R.color.toolbarIconColor) // Default icon color
-        val iconColorSelected = ContextCompat.getColor(this, R.color.selectedTabIconColor) // Selected icon color
+        val iconColorDefault = ContextCompat.getColor(this, R.color.toolbarIconColor)
+        val iconColorSelected = ContextCompat.getColor(this, R.color.selectedTabIconColor)
 
-        // Setup ViewPager Adapter
         val adapter = ViewPagerAdapter(this)
         viewPager.adapter = adapter
 
-        // Attach TabLayout with ViewPager
+        initializeHomeFragment()
+
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {
                 0 -> tab.icon = ContextCompat.getDrawable(this, R.drawable.ic_home)
@@ -64,38 +72,30 @@ class MainActivity : AppCompatActivity() {
             }
         }.attach()
 
-        // Initialize Tab Icons with First Tab Selected
         updateTabIcons(tabLayout, 0, iconColorSelected, iconColorDefault)
 
-        // Handle Tab Icon Tint for Selection and Scroll
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 updateTabIcons(tabLayout, position, iconColorSelected, iconColorDefault)
             }
         })
 
-        // Handle Account Button Click to open ProfileSettings
         accountButton.setOnClickListener {
             val intent = Intent(this, ProfileSettings::class.java)
             startActivity(intent)
         }
 
-        // Handle Search Icon Click
         searchButton.setOnClickListener {
             toggleSearchView()
         }
 
-        // Handle tapping anywhere on the SearchView, including the empty area
         searchView.setOnClickListener {
-            searchView.isIconified = false // Open the search input field
+            searchView.isIconified = false
         }
 
-        // Handle Search Query Submission
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                query?.let {
-                    sendSearchQueryToHomeFragment(it)
-                }
+                query?.let { sendSearchQueryToHomeFragment(it) }
                 return true
             }
 
@@ -104,32 +104,71 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Glide dynamic images for account and search buttons
         Glide.with(this).load(R.drawable.ic_account).into(accountButton)
         Glide.with(this).load(R.drawable.ic_search).into(searchButton)
+
+        notificationButton = findViewById(R.id.notificationButton)
+        notificationBadge = findViewById(R.id.notificationBadge)
+
+        notificationButton.setOnClickListener {
+            openNotificationFragment()
+        }
+
+        fetchNotifications()
     }
 
-    // Show or Hide the SearchView
+    private fun initializeHomeFragment() {
+        val fragmentTransaction = supportFragmentManager.beginTransaction()
+        homeFragment = HomeFragment()
+        fragmentTransaction.add(R.id.fragment_container, homeFragment!!, "HomeFragment")
+        fragmentTransaction.commit()
+    }
+
     private fun toggleSearchView() {
         if (searchView.visibility == View.VISIBLE) {
-            searchView.visibility = View.GONE // Hide the search bar
-            searchView.clearFocus() // Remove focus if it was previously active
+            searchView.visibility = View.GONE
+            searchView.clearFocus()
         } else {
-            searchView.visibility = View.VISIBLE // Show the search bar
-            searchView.requestFocus() // Automatically focus on the search bar
+            searchView.visibility = View.VISIBLE
+            searchView.requestFocus()
         }
     }
 
-    // Pass Search Query to HomeFragment
     private fun sendSearchQueryToHomeFragment(query: String) {
-        val currentFragment = supportFragmentManager.fragments.find {
-            it is HomeFragment
-        } as? HomeFragment
-
-        currentFragment?.filterContent(query)
+        homeFragment?.filterContent(query) ?: Log.e("MainActivity", "HomeFragment is not initialized!")
     }
 
-    // Update Tab Icons Based on Selection
+    private fun fetchNotifications() {
+        firestore.collection("users")
+            .document(firebaseAuth.currentUser!!.uid)
+            .collection("notifications")
+            .whereEqualTo("isRead", false)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                unreadNotificationsCount = snapshot.size()
+                updateNotificationBadge(unreadNotificationsCount)
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainActivity", "Failed to fetch notifications: ${e.message}")
+            }
+    }
+
+    private fun updateNotificationBadge(count: Int) {
+        if (count > 0) {
+            notificationBadge.visibility = View.VISIBLE
+            notificationBadge.text = count.toString()
+        } else {
+            notificationBadge.visibility = View.GONE
+        }
+    }
+
+    private fun openNotificationFragment() {
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.fragment_container, NotificationFragment())
+        transaction.addToBackStack(null)
+        transaction.commit()
+    }
+
     private fun updateTabIcons(
         tabLayout: TabLayout,
         selectedPosition: Int,
@@ -139,9 +178,9 @@ class MainActivity : AppCompatActivity() {
         for (i in 0 until tabLayout.tabCount) {
             val tab = tabLayout.getTabAt(i)
             if (i == selectedPosition) {
-                tab?.icon?.setTint(iconColorSelected) // Selected Tab
+                tab?.icon?.setTint(iconColorSelected)
             } else {
-                tab?.icon?.setTint(iconColorDefault) // Unselected Tabs
+                tab?.icon?.setTint(iconColorDefault)
             }
         }
     }
