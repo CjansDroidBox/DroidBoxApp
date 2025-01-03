@@ -5,13 +5,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
-import com.google.firebase.Timestamp
 
-
-class NotificationAdapter(private val notifications: List<Notification>) :
+class NotificationAdapter(private val notifications: MutableList<Notification>) :
     RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder>() {
 
     inner class NotificationViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -30,6 +31,29 @@ class NotificationAdapter(private val notifications: List<Notification>) :
         val notification = notifications[position]
         holder.message.text = notification.message
         holder.time.text = formatTimestamp(notification.timestamp)
+
+        // Set background color based on read/unread status
+        holder.itemView.setBackgroundColor(
+            if (notification.isRead) ContextCompat.getColor(holder.itemView.context, R.color.readNotificationBackground)
+            else ContextCompat.getColor(holder.itemView.context, R.color.unreadNotificationBackground)
+        )
+
+        holder.itemView.setOnClickListener {
+            // Show a toast for the clicked notification
+            Toast.makeText(
+                holder.itemView.context,
+                "Notification clicked: ${notification.message}",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            // Mark the notification as read in Firestore
+            NotificationRepository.markNotificationAsRead(notification.id)
+
+            // Update the local list and notify RecyclerView
+            val updatedNotification = notification.copy(isRead = true)
+            notifications[position] = updatedNotification
+            notifyItemChanged(position)
+        }
     }
 
     override fun getItemCount(): Int = notifications.size

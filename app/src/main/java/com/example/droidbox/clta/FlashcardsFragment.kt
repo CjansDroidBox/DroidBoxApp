@@ -461,6 +461,9 @@ class FlashcardsFragment : Fragment() {
                                 historyList.add(historyItem)
                                 historyAdapter.notifyItemInserted(historyList.size - 1)
 
+                                // Add a notification for the shared section
+                                addNotificationForSharedSection(userUID, "You shared the section: $sectionName")
+
                                 Toast.makeText(
                                     requireContext(),
                                     "Section \"$sectionName\" shared successfully!",
@@ -487,6 +490,26 @@ class FlashcardsFragment : Fragment() {
             }
             .create()
             .show()
+    }
+
+    private fun addNotificationForSharedSection(userId: String, message: String) {
+        val notificationData = mapOf(
+            "message" to message,
+            "timestamp" to Timestamp.now(),
+            "isRead" to false
+        )
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .collection("notifications")
+            .add(notificationData)
+            .addOnSuccessListener {
+                Log.d("Notification", "Notification added successfully!")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Notification", "Failed to add notification: ${e.message}")
+            }
     }
 
     private fun handleInputData() {

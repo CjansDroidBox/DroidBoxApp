@@ -28,4 +28,8 @@
     <color name="gradientStart">#FF7F50</color> <!-- Coral -->
     <color name="gradientEnd">#FF4500</color> <!-- Orange Red -->
 
+    <color name="unreadNotificationBackground">#616161</color><!-- Example color for unread -->
+    <color name="readNotificationBackground">#FFFFFF</color>  <!-- Example color for read -->
+
+
 </resources>

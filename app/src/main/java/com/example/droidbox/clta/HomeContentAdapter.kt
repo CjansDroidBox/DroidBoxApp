@@ -34,5 +34,4 @@ class HomeContentAdapter(private val contentList: MutableList<HomeContent>) :
         contentList.addAll(newContent)
         notifyDataSetChanged()
     }
-
 }

@@ -5,24 +5,28 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 class NotificationFragment : Fragment() {
 
     private lateinit var notificationRecyclerView: RecyclerView
     private lateinit var notificationAdapter: NotificationAdapter
     private val notifications = mutableListOf<Notification>()
-
-    private lateinit var firestore: FirebaseFirestore
+    private var lastBackPressTime: Long = 0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_notification, container, false)
+        return inflater.inflate(R.layout.fragment_notification, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         // Initialize RecyclerView
         notificationRecyclerView = view.findViewById(R.id.notificationRecyclerView)
@@ -30,13 +34,28 @@ class NotificationFragment : Fragment() {
         notificationRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         notificationRecyclerView.adapter = notificationAdapter
 
-        // Initialize Firestore
-        firestore = FirebaseFirestore.getInstance()
-
         // Fetch notifications
         fetchNotifications()
 
-        return view
+        // Handle back press for double-tap to close
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastBackPressTime < 2000) {
+                        parentFragmentManager.popBackStack()
+                    } else {
+                        lastBackPressTime = currentTime
+                        Toast.makeText(
+                            requireContext(),
+                            "Press back again to close notifications",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        )
     }
 
     private fun fetchNotifications() {
@@ -46,25 +65,10 @@ class NotificationFragment : Fragment() {
             return
         }
 
-        firestore.collection("users")
-            .document(currentUser.uid)
-            .collection("notifications")
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val fetchedNotifications = snapshot.documents.mapNotNull { document ->
-                    val message = document.getString("message") ?: return@mapNotNull null
-                    val timestamp = document.getTimestamp("timestamp") ?: return@mapNotNull null
-                    val isRead = document.getBoolean("isRead") ?: false
-
-                    Notification(message, timestamp, isRead)
-                }
-                notifications.clear()
-                notifications.addAll(fetchedNotifications)
-                notificationAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { e ->
-                Log.e("NotificationFragment", "Failed to fetch notifications: ${e.message}")
-            }
+        NotificationRepository.fetchNotifications(currentUser.uid) { fetchedNotifications ->
+            notifications.clear()
+            notifications.addAll(fetchedNotifications)
+            notificationAdapter.notifyDataSetChanged()
+        }
     }
 }

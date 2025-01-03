@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class HomeFragment : Fragment() {
 
@@ -44,6 +45,7 @@ class HomeFragment : Fragment() {
 
     private fun loadContentFromFirestore() {
         FirebaseFirestore.getInstance().collection("shared_content")
+            .orderBy("dateTime", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { snapshot ->
                 swipeRefreshLayout.isRefreshing = false

@@ -115,6 +115,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         fetchNotifications()
+        fetchUnreadNotificationsCount()
+
     }
 
     private fun initializeHomeFragment() {
@@ -139,19 +141,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchNotifications() {
-        firestore.collection("users")
-            .document(firebaseAuth.currentUser!!.uid)
-            .collection("notifications")
-            .whereEqualTo("isRead", false)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                unreadNotificationsCount = snapshot.size()
-                updateNotificationBadge(unreadNotificationsCount)
-            }
-            .addOnFailureListener { e ->
-                Log.e("MainActivity", "Failed to fetch notifications: ${e.message}")
-            }
+        val currentUser = firebaseAuth.currentUser
+        if (currentUser == null) {
+            Log.e("MainActivity", "User is not authenticated")
+            return
+        }
+
+        NotificationRepository.fetchUnreadNotificationsCount(currentUser.uid) { count ->
+            unreadNotificationsCount = count
+            updateNotificationBadge(count)
+        }
     }
+
+    private fun fetchUnreadNotificationsCount() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) return
+
+        NotificationRepository.fetchUnreadNotificationsCount(currentUser.uid) { count ->
+            runOnUiThread {
+                updateNotificationBadge(count)
+            }
+        }
+    }
+
 
     private fun updateNotificationBadge(count: Int) {
         if (count > 0) {
@@ -163,6 +175,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openNotificationFragment() {
+        findViewById<View>(R.id.fragment_container).visibility = View.VISIBLE
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.fragment_container, NotificationFragment())
         transaction.addToBackStack(null)
