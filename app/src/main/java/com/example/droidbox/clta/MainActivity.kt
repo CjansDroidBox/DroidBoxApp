@@ -111,13 +111,114 @@ class MainActivity : AppCompatActivity() {
         notificationBadge = findViewById(R.id.notificationBadge)
 
         notificationButton.setOnClickListener {
-            openNotificationFragment()
+            migrateNotifications { isSuccess ->
+                if (isSuccess) {
+                    deleteUserNotifications {
+                        fetchNotifications()
+                        fetchUnreadNotificationsCount()
+                        openNotificationFragment()
+                    }
+                } else {
+                    Log.e("Migration", "Migration failed. Skipping cleanup.")
+                    fetchNotifications()
+                    fetchUnreadNotificationsCount()
+                    openNotificationFragment()
+                }
+            }
         }
 
-        fetchNotifications()
-        fetchUnreadNotificationsCount()
 
     }
+
+    private fun deleteUserNotifications(onComplete: () -> Unit) {
+        val firestore = FirebaseFirestore.getInstance()
+
+        firestore.collection("users").get()
+            .addOnSuccessListener { usersSnapshot ->
+                val batch = firestore.batch()
+
+                usersSnapshot.documents.forEach { userDocument ->
+                    val notificationsRef = userDocument.reference.collection("notifications")
+                    notificationsRef.get()
+                        .addOnSuccessListener { notificationsSnapshot ->
+                            notificationsSnapshot.documents.forEach { notification ->
+                                batch.delete(notification.reference)
+                            }
+
+                            batch.commit()
+                                .addOnSuccessListener {
+                                    Log.d("Cleanup", "Deleted notifications for user: ${userDocument.id}")
+                                    onComplete()
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("Cleanup", "Failed to delete notifications: ${e.message}")
+                                    onComplete()
+                                }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Cleanup", "Failed to fetch notifications for user: ${e.message}")
+                            onComplete()
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Cleanup", "Failed to fetch users: ${e.message}")
+                onComplete()
+            }
+    }
+
+    private fun migrateNotifications(onComplete: (Boolean) -> Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            onComplete(false)
+            return
+        }
+
+        val userNotificationsRef = FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(currentUser.uid)
+            .collection("notifications")
+
+        userNotificationsRef.get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) {
+                    Log.d("Migration", "No notifications to migrate.")
+                    onComplete(true)
+                    return@addOnSuccessListener
+                }
+
+                val rootNotificationsRef = FirebaseFirestore.getInstance().collection("notifications")
+                val batch = FirebaseFirestore.getInstance().batch()
+
+                snapshot.documents.forEach { document ->
+                    val data = document.data ?: return@forEach
+                    val notificationId = document.id
+
+                    // Add the notification to the root-level notifications collection
+                    val newNotification = rootNotificationsRef.document(notificationId)
+                    batch.set(newNotification, data)
+
+                    // Optionally, delete the notification from the user's sub-collection
+                    batch.delete(document.reference)
+                }
+
+                batch.commit()
+                    .addOnSuccessListener {
+                        Log.d("Migration", "Notifications migrated successfully.")
+                        onComplete(true)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Migration", "Failed to migrate notifications: ${e.message}")
+                        onComplete(false)
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Migration", "Failed to fetch user notifications: ${e.message}")
+                onComplete(false)
+            }
+    }
+
+
 
     private fun initializeHomeFragment() {
         val fragmentTransaction = supportFragmentManager.beginTransaction()
@@ -141,29 +242,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchNotifications() {
-        val currentUser = firebaseAuth.currentUser
-        if (currentUser == null) {
-            Log.e("MainActivity", "User is not authenticated")
-            return
-        }
-
-        NotificationRepository.fetchUnreadNotificationsCount(currentUser.uid) { count ->
-            unreadNotificationsCount = count
-            updateNotificationBadge(count)
+        NotificationRepository.fetchNotifications { notifications ->
+            Log.d("MainActivity", "Fetched notifications: $notifications")
         }
     }
 
     private fun fetchUnreadNotificationsCount() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) return
-
-        NotificationRepository.fetchUnreadNotificationsCount(currentUser.uid) { count ->
-            runOnUiThread {
-                updateNotificationBadge(count)
-            }
+        NotificationRepository.fetchUnreadNotificationsCount { unreadCount ->
+            updateNotificationBadge(unreadCount)
         }
     }
-
 
     private fun updateNotificationBadge(count: Int) {
         if (count > 0) {
@@ -173,6 +261,7 @@ class MainActivity : AppCompatActivity() {
             notificationBadge.visibility = View.GONE
         }
     }
+
 
     private fun openNotificationFragment() {
         findViewById<View>(R.id.fragment_container).visibility = View.VISIBLE

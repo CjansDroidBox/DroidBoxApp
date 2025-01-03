@@ -29,14 +29,18 @@ class NotificationAdapter(private val notifications: MutableList<Notification>) 
 
     override fun onBindViewHolder(holder: NotificationViewHolder, position: Int) {
         val notification = notifications[position]
+
+        // Update the message text
         holder.message.text = notification.message
         holder.time.text = formatTimestamp(notification.timestamp)
 
-        // Set background color based on read/unread status
-        holder.itemView.setBackgroundColor(
-            if (notification.isRead) ContextCompat.getColor(holder.itemView.context, R.color.readNotificationBackground)
-            else ContextCompat.getColor(holder.itemView.context, R.color.unreadNotificationBackground)
-        )
+        // Change text color based on read/unread status
+        val textColor = if (notification.isRead) {
+            ContextCompat.getColor(holder.itemView.context, R.color.readNotificationTextColor)
+        } else {
+            ContextCompat.getColor(holder.itemView.context, R.color.unreadNotificationTextColor)
+        }
+        holder.message.setTextColor(textColor)
 
         holder.itemView.setOnClickListener {
             // Show a toast for the clicked notification

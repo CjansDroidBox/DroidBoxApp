@@ -1,11 +1,10 @@
 package com.example.droidbox.clta
 
-import com.google.firebase.Timestamp
+
 
 data class Notification(
     val id: String = "",
     val message: String = "",
-    val timestamp: Timestamp = Timestamp.now(),
+    val timestamp: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now(),
     val isRead: Boolean = false
 )
-

@@ -59,13 +59,7 @@ class NotificationFragment : Fragment() {
     }
 
     private fun fetchNotifications() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Log.e("NotificationFragment", "User is not authenticated")
-            return
-        }
-
-        NotificationRepository.fetchNotifications(currentUser.uid) { fetchedNotifications ->
+        NotificationRepository.fetchNotifications { fetchedNotifications ->
             notifications.clear()
             notifications.addAll(fetchedNotifications)
             notificationAdapter.notifyDataSetChanged()
