@@ -425,86 +425,86 @@ class FlashcardsFragment : Fragment() {
             .setItems(sectionNames.toTypedArray()) { _, which ->
                 val sectionName = sectionNames[which]
 
-                // Add the "Shared" section to Firestore's shared_content collection
-                val sharedContentRef = FirebaseFirestore.getInstance().collection("shared_content")
-                    .document() // Auto-generate a unique document ID
-
-                val sharedContent = mapOf(
-                    "title" to "Section: $sectionName",
-                    "description" to "Shared on ${getCurrentDateTime().toDate()}",
-                    "dateTime" to getCurrentDateTime(),
-                    "sharedBy" to userUID, // Include the UID of the user who shared the content
-                    "details" to mapOf(
-                        "shared" to true,
-                        "downloaded" to false
-                    )
-                )
-
-                sharedContentRef.set(sharedContent)
-                    .addOnSuccessListener {
-                        // Add the "Shared" action to the user's history
-                        val historyRef = firestore.collection("users")
-                            .document(userUID)
-                            .collection("history")
-                            .document()
-
-                        val historyItem = FlashcardHistory(
-                            action = "Shared",
-                            sectionName = sectionName,
-                            dateTime = getCurrentDateTime(),
-                            details = Details(shared = true, downloaded = false)
-                        )
-
-                        historyRef.set(historyItem)
-                            .addOnSuccessListener {
-                                // Add to local history list
-                                historyList.add(historyItem)
-                                historyAdapter.notifyItemInserted(historyList.size - 1)
-
-                                // Add a notification for the shared section
-                                addNotificationForSharedSection(
-                                    userUID,
-                                    "$userUID shared the section: $sectionName"
-                                )
-
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Section \"$sectionName\" shared successfully!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            .addOnFailureListener {
-                                Log.e("Firestore", "Failed to log history: ${it.message}")
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Failed to log share action in history.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Failed to share section: ${e.message}")
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to share section \"$sectionName\".",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                // Show dialog to enter description
+                showDescriptionDialog(sectionName)
             }
             .create()
             .show()
     }
 
-    private fun addNotificationForSharedSection(userId: String, message: String) {
-        val notificationData = mapOf(
-            "message" to message,
-            "timestamp" to com.google.firebase.Timestamp.now(),
-            "isRead" to false,
-            "userId" to userId // Ensure this field is included for root-level filtering
+    private fun showDescriptionDialog(sectionName: String) {
+        // Inflate the custom layout
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_share_section, null)
+        val descriptionInput = dialogView.findViewById<EditText>(R.id.descriptionInput)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelShareButton)
+        val shareButton = dialogView.findViewById<Button>(R.id.confirmShareButton)
+
+        // Create the dialog
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // Set up the Cancel button
+        cancelButton.setOnClickListener {
+            dialog.dismiss() // Close the dialog
+        }
+
+        // Set up the Share button
+        shareButton.setOnClickListener {
+            val description = descriptionInput.text.toString().trim()
+
+            if (description.isEmpty()) {
+                Toast.makeText(requireContext(), "Description cannot be empty!", Toast.LENGTH_SHORT).show()
+            } else {
+                // Proceed with sharing
+                dialog.dismiss() // Close the dialog before sharing
+                shareSection(sectionName, description)
+            }
+        }
+
+        // Show the dialog
+        dialog.show()
+    }
+
+    private fun shareSection(sectionName: String, description: String) {
+        val sharedContentRef = firestore.collection("shared_content").document()
+
+        val sharedContent = mapOf(
+            "title" to sectionName,
+            "description" to description,
+            "dateTime" to getCurrentDateTime(),
+            "sharedBy" to userUID,
+            "type" to "Flashcard" // Add type field
         )
 
-        FirebaseFirestore.getInstance()
-            .collection("notifications") // Root-level notifications collection
+        sharedContentRef.set(sharedContent)
+            .addOnSuccessListener {
+                // Add notification
+                addNotificationForSharedSection(userUID, sectionName, description, "Flashcard")
+
+                Toast.makeText(requireContext(), "Section shared successfully!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to share section: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun addNotificationForSharedSection(userId: String, sectionName: String, message: String, type: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val ownerName = currentUser?.displayName ?: "Unknown"
+
+        val notificationData = mapOf(
+            "title" to sectionName,
+            "description" to message,
+            "ownerName" to ownerName,
+            "sharedContentId" to UUID.randomUUID().toString(),
+            "timestamp" to Timestamp.now(),
+            "isRead" to false,
+            "type" to type,
+            "userId" to userId
+        )
+
+        firestore.collection("notifications")
             .add(notificationData)
             .addOnSuccessListener {
                 Log.d("Notification", "Notification added successfully!")
@@ -513,6 +513,7 @@ class FlashcardsFragment : Fragment() {
                 Log.e("Notification", "Failed to add notification: ${e.message}")
             }
     }
+
 
     private fun handleInputData() {
         if (sectionData.isEmpty()) {

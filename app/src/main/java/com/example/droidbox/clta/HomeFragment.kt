@@ -16,12 +16,13 @@ import com.google.firebase.firestore.Query
 class HomeFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: HomeContentAdapter
+    private lateinit var adapter: SharedContentAdapter
     private lateinit var emptyStateTextView: TextView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private val filteredList = mutableListOf<HomeContent>()
 
-    private val contentList = mutableListOf<HomeContent>() // List for content
-    private val filteredList = mutableListOf<HomeContent>() // Filtered content
+
+    private val contentList = mutableListOf<HomeContent>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -33,7 +34,13 @@ class HomeFragment : Fragment() {
         emptyStateTextView = view.findViewById(R.id.emptyStateTextView)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = HomeContentAdapter(filteredList)
+        adapter = SharedContentAdapter(
+            contentList,
+            onLikeClick = { sharedContentId -> handleLikeClick(sharedContentId) },
+            onCommentClick = { sharedContentId -> handleCommentClick(sharedContentId) },
+            onShareClick = { sharedContentId -> handleShareClick(sharedContentId) },
+            onDownloadClick = { sharedContentId -> handleDownloadClick(sharedContentId) }
+        )
         recyclerView.adapter = adapter
 
         loadContentFromFirestore()
@@ -42,6 +49,20 @@ class HomeFragment : Fragment() {
 
         return view
     }
+
+    fun filterContent(query: String) {
+        val lowercaseQuery = query.lowercase()
+        filteredList.clear()
+        filteredList.addAll(
+            contentList.filter {
+                it.title.lowercase().contains(lowercaseQuery) ||
+                        it.description.lowercase().contains(lowercaseQuery)
+            }
+        )
+        adapter.notifyDataSetChanged()
+        showEmptyState(filteredList.isEmpty())
+    }
+
 
     private fun loadContentFromFirestore() {
         FirebaseFirestore.getInstance().collection("shared_content")
@@ -56,16 +77,17 @@ class HomeFragment : Fragment() {
 
                 val fetchedContent = snapshot.documents.mapNotNull { document ->
                     val title = document.getString("title") ?: return@mapNotNull null
-                    val description = document.getString("description") ?: return@mapNotNull null
-                    HomeContent(title, description)
+                    val description = document.getString("description") ?: ""
+                    val type = document.getString("type") ?: "Unknown"
+                    val sharedContentId = document.id
+
+                    HomeContent(title, description, type, sharedContentId)
                 }
 
                 contentList.clear()
                 contentList.addAll(fetchedContent)
-                filteredList.clear()
-                filteredList.addAll(contentList)
                 adapter.notifyDataSetChanged()
-                showEmptyState(filteredList.isEmpty())
+                showEmptyState(contentList.isEmpty())
             }
             .addOnFailureListener { e ->
                 swipeRefreshLayout.isRefreshing = false
@@ -79,16 +101,19 @@ class HomeFragment : Fragment() {
         recyclerView.visibility = if (show) View.GONE else View.VISIBLE
     }
 
-    fun filterContent(query: String) {
-        val lowercaseQuery = query.lowercase()
-        filteredList.clear()
-        filteredList.addAll(
-            contentList.filter {
-                it.title.lowercase().contains(lowercaseQuery) ||
-                        it.description.lowercase().contains(lowercaseQuery)
-            }
-        )
-        adapter.notifyDataSetChanged()
-        showEmptyState(filteredList.isEmpty())
+    private fun handleLikeClick(sharedContentId: String) {
+        Toast.makeText(requireContext(), "Liked content ID: $sharedContentId", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handleCommentClick(sharedContentId: String) {
+        Toast.makeText(requireContext(), "Commented on content ID: $sharedContentId", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handleShareClick(sharedContentId: String) {
+        Toast.makeText(requireContext(), "Shared content ID: $sharedContentId", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handleDownloadClick(sharedContentId: String) {
+        Toast.makeText(requireContext(), "Downloaded content ID: $sharedContentId", Toast.LENGTH_SHORT).show()
     }
 }

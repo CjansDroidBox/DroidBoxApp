@@ -10,7 +10,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 
 class NotificationFragment : Fragment() {
 
@@ -18,6 +19,9 @@ class NotificationFragment : Fragment() {
     private lateinit var notificationAdapter: NotificationAdapter
     private val notifications = mutableListOf<Notification>()
     private var lastBackPressTime: Long = 0
+
+    // Firestore listener
+    private var notificationListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -34,8 +38,8 @@ class NotificationFragment : Fragment() {
         notificationRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         notificationRecyclerView.adapter = notificationAdapter
 
-        // Fetch notifications
-        fetchNotifications()
+        // Fetch notifications with real-time updates
+        listenForNotifications()
 
         // Handle back press for double-tap to close
         requireActivity().onBackPressedDispatcher.addCallback(
@@ -58,11 +62,17 @@ class NotificationFragment : Fragment() {
         )
     }
 
-    private fun fetchNotifications() {
-        NotificationRepository.fetchNotifications { fetchedNotifications ->
+    private fun listenForNotifications() {
+        notificationListener = NotificationRepository.listenForNotifications { fetchedNotifications ->
             notifications.clear()
             notifications.addAll(fetchedNotifications)
             notificationAdapter.notifyDataSetChanged()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Remove Firestore listener when the fragment is destroyed
+        notificationListener?.remove()
     }
 }

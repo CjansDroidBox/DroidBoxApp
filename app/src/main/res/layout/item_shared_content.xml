@@ -6,45 +6,81 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <!-- Title of the Shared Content -->
+    <!-- Title Section -->
     <TextView
-        android:id="@+id/sharedItemTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Shared Item Title"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black" />
-
-    <!-- Description or Details -->
-    <TextView
-        android:id="@+id/sharedItemDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Description of the shared content goes here."
-        android:textSize="14sp"
-        android:layout_marginTop="4dp" />
-
-    <!-- Action Buttons (e.g., Download or View) -->
-    <LinearLayout
+        android:id="@+id/sharedContentTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:text="Shared Content Title"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Description Section -->
+    <TextView
+        android:id="@+id/sharedContentDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Shared Content Description"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Type Section -->
+    <TextView
+        android:id="@+id/sharedContentType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Type: Flashcard"
+        android:textStyle="italic"
+        android:textSize="12sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Like, Comment, Share, Download Section -->
+    <LinearLayout
+        android:id="@+id/likeCommentShareContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:gravity="end">
+        android:orientation="horizontal"
+        android:gravity="center">
 
-        <Button
-            android:id="@+id/viewButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="View" />
+        <!-- Like Button -->
+        <ImageView
+            android:id="@+id/likeButton"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:src="@drawable/ic_like"
+            android:contentDescription="Like" />
 
-        <Button
-            android:id="@+id/downloadButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Download"
-            android:layout_marginStart="8dp" />
+        <!-- Comment Button -->
+        <ImageView
+            android:id="@+id/commentButton"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_comment"
+            android:contentDescription="Comment" />
+
+        <!-- Share Button -->
+        <ImageView
+            android:id="@+id/shareButton"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_share"
+            android:contentDescription="Share" />
+
+        <!-- Download Button -->
+        <ImageView
+            android:id="@+id/actionButton"
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_download"
+            android:contentDescription="Download" />
     </LinearLayout>
-
 </LinearLayout>
